@@ -1,0 +1,400 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 353 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 353 100% 45%;
+    --radius: 0.75rem;
+
+    /* Màu nền tối hơn - xám tối */
+    --app-background: 220 10% 92%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 353 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 353 100% 45%;
+
+    /* Màu nền tối hơn - xám tối */
+    --app-background: 220 10% 18%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[hsl(var(--app-background))] text-foreground;
+  }
+}
+
+@layer components {
+  .techcom-card {
+    @apply bg-white rounded-xl shadow-techcom hover:shadow-techcom-lg;
+  }
+
+  .techcom-button {
+    @apply bg-techcom-red text-white rounded-full font-medium hover:bg-techcom-darkred;
+  }
+
+  .techcom-input {
+    @apply rounded-lg border border-techcom-darkgray bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-techcom-red;
+  }
+
+  .techcom-tab {
+    @apply rounded-full px-4 py-2 text-sm font-medium;
+  }
+
+  .techcom-tab-active {
+    @apply bg-techcom-red text-white;
+  }
+
+  .techcom-tab-inactive {
+    @apply bg-techcom-gray text-techcom-text hover:bg-techcom-darkgray;
+  }
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 220, 220, 225;
+  --background-end-rgb: 210, 210, 215;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 50, 50, 55;
+    --background-end-rgb: 40, 40, 45;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: #f0f0f4;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Techcom colors */
+:root {
+  --techcom-red: #e4002b;
+  --techcom-darkred: #c00026;
+  --techcom-blue: #0066b3;
+  --techcom-lightblue: #e6f0f9;
+  --techcom-text: #333333;
+  --techcom-lighttext: #666666;
+  --techcom-gray: #f0f0f4;
+  --techcom-darkgray: #e0e0e4;
+}
+
+.text-techcom-red {
+  color: var(--techcom-red);
+}
+
+.text-techcom-darkred {
+  color: var(--techcom-darkred);
+}
+
+.text-techcom-blue {
+  color: var(--techcom-blue);
+}
+
+.text-techcom-text {
+  color: var(--techcom-text);
+}
+
+.text-techcom-lighttext {
+  color: var(--techcom-lighttext);
+}
+
+.bg-techcom-red {
+  background-color: var(--techcom-red);
+}
+
+.bg-techcom-darkred {
+  background-color: var(--techcom-darkred);
+}
+
+.bg-techcom-blue {
+  background-color: var(--techcom-blue);
+}
+
+.bg-techcom-lightblue {
+  background-color: var(--techcom-lightblue);
+}
+
+.bg-techcom-gray {
+  background-color: var(--techcom-gray);
+}
+
+.bg-techcom-darkgray {
+  background-color: var(--techcom-darkgray);
+}
+
+.hover\:bg-techcom-darkred:hover {
+  background-color: var(--techcom-darkred);
+}
+
+.hover\:bg-techcom-darkgray:hover {
+  background-color: var(--techcom-darkgray);
+}
+
+.border-techcom-red {
+  border-color: var(--techcom-red);
+}
+
+.shadow-techcom {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.shadow-techcom-lg {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.bg-card-lighter {
+  background-color: #f9f9f9;
+}
+
+/* Loading dots animation - keeping this as it's a simple functional animation */
+.loading-dots:after {
+  content: "...";
+  animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+  0%,
+  20% {
+    content: "";
+  }
+  40% {
+    content: ".";
+  }
+  60% {
+    content: "..";
+  }
+  80%,
+  100% {
+    content: "...";
+  }
+}
+
+/* Increase app width */
+.container {
+  max-width: 1200px !important; /* Increase from default */
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px !important;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px !important;
+  }
+}
+
+/* Force light mode colors even in forced dark mode */
+@media (prefers-color-scheme: dark) {
+  html:not(.dark) {
+    color-scheme: light;
+  }
+
+  /* Force background colors */
+  html:not(.dark) body {
+    background-color: #f0f0f4 !important;
+    color: #333333 !important;
+  }
+
+  /* Force card backgrounds */
+  html:not(.dark) .bg-white,
+  html:not(.dark) .bg-background,
+  html:not(.dark) .bg-card {
+    background-color: white !important;
+  }
+
+  /* Force text colors */
+  html:not(.dark) .text-foreground,
+  html:not(.dark) .text-techcom-text {
+    color: #333333 !important;
+  }
+
+  html:not(.dark) .text-muted-foreground,
+  html:not(.dark) .text-techcom-lighttext {
+    color: #666666 !important;
+  }
+
+  /* Force border colors */
+  html:not(.dark) .border,
+  html:not(.dark) .border-border {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Force input backgrounds */
+  html:not(.dark) input,
+  html:not(.dark) select,
+  html:not(.dark) textarea {
+    background-color: white !important;
+    color: #333333 !important;
+  }
+}
+
+/* Make sure we're not disabling the loading screen transitions */
+* {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Exception for loading screen */
+.loadingScreen,
+.loadingScreen *,
+[class*="loadingScreen"] * {
+  transition: opacity 0.3s ease-out !important;
+  animation: wipeEffect 0.8s ease-in-out 0.2s forwards !important;
+}
+
+@keyframes wipeEffect {
+  from {
+    left: -100%;
+  }
+  to {
+    left: 0;
+  }
+}
+
+/* Exception for loading screen and loading dots */
+.loadingScreen,
+.loadingScreen *,
+.loading-dots:after {
+  animation-duration: initial !important;
+  animation-delay: initial !important;
+  animation-iteration-count: initial !important;
+  animation-name: initial !important;
+  animation-direction: initial !important;
+  animation-fill-mode: initial !important;
+  animation-play-state: initial !important;
+  transition: initial !important;
+}
+
+/* Remove dropdown animations */
+[data-radix-popper-content-wrapper] {
+  transform: none !important;
+  opacity: 1 !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Remove dropdown menu animations */
+.dropdown-content {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  transform: none !important;
+  opacity: 1 !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Remove dropdown item animations */
+.dropdown-item {
+  transform: none !important;
+  opacity: 1 !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Remove dropdown trigger icon animation */
+[data-state="open"] .lucide-chevron-down,
+[data-state="closed"] .lucide-chevron-down {
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Ensure Card components have consistent shadow */
+.Card,
+.card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Ensure consistent hover effects */
+.Card:hover,
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Override any button animations */
+button {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+button:active:not(:disabled) {
+  transform: none !important;
+}
