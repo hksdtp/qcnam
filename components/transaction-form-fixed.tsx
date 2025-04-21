@@ -3,11 +3,10 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Upload, FileType, AlertCircle } from "lucide-react"
+import { Upload, FileType, AlertCircle } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { addTransaction } from "@/lib/actions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -516,7 +515,7 @@ export function TransactionFormFixed({
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form id="transaction-form" onSubmit={handleSubmit}>
           <div className="space-y-3">
             <TabsContent value="expense" className="mt-0 pt-0">
               <div className="space-y-2">
@@ -715,23 +714,6 @@ export function TransactionFormFixed({
                   )}
                 </div>
               )}
-            </div>
-
-            <div className="pt-3">
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-techcom-red hover:bg-techcom-darkred text-white rounded-lg h-10 text-sm"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    Đang lưu...
-                  </>
-                ) : (
-                  "Lưu"
-                )}
-              </Button>
             </div>
           </div>
         </form>

@@ -132,12 +132,22 @@ export async function addTransaction(formData: FormData) {
 
     // Chuẩn bị dữ liệu để thêm vào Sheet1
     const timestamp = new Date().toISOString()
+
+    // Xác định loại giao dịch dựa trên category và type
+    let finalType = type
+
+    // Nếu là "Ứng tài khoản" hoặc "Ứng tiền mặt", đảm bảo type là "income"
+    if (category === "Ứng tài khoản" || category === "Ứng tiền mặt" || category === "Hoàn tiền") {
+      finalType = "income"
+      console.log(`Đã xác định loại giao dịch là "income" cho danh mục "${category}"`)
+    }
+
     const rowData = [
       date,
       category,
       description,
       amount.toString(),
-      type,
+      finalType,
       webViewLink || "",
       timestamp,
       subCategory || "",
@@ -169,7 +179,7 @@ export async function addTransaction(formData: FormData) {
         category,
         description,
         amount,
-        type: type as "income" | "expense",
+        type: finalType as "income" | "expense",
         receiptLink: webViewLink,
         timestamp,
         subCategory,
@@ -277,13 +287,22 @@ export async function editTransaction(formData: FormData) {
     const { sheets } = await initGoogleAPIs()
     const SPREADSHEET_ID = await getSpreadsheetId()
 
+    // Xác định loại giao dịch dựa trên category và type
+    let finalType = type
+
+    // Nếu là "Ứng tài khoản" hoặc "Ứng tiền mặt", đảm bảo type là "income"
+    if (category === "Ứng tài khoản" || category === "Ứng tiền mặt" || category === "Hoàn tiền") {
+      finalType = "income"
+      console.log(`Đã xác định loại giao dịch là "income" cho danh mục "${category}"`)
+    }
+
     // Chuẩn bị dữ liệu để cập nhật
     const rowData = [
       date,
       category,
       description,
       amount.toString(),
-      type,
+      finalType,
       "", // Giữ nguyên link hóa đơn
       "", // Giữ nguyên timestamp
       subCategory || "",
