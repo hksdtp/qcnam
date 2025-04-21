@@ -8,6 +8,8 @@ import { JWT } from "google-auth-library"
 const SPREADSHEET_ID = "1JwFzEMRZsxAuIzMV0XRSI5X98AXeGa9f2cXVkUzXReE"
 // Cập nhật tên sheet chính xác - thường là "Sheet1" hoặc "Trang tính1"
 const SHEET_NAME = "Sheet1"
+// Thêm tên sheet Vi
+const VI_SHEET_NAME = "Vi"
 // ID thư mục Google Drive mới
 const DRIVE_FOLDER_ID = "1BoiKfWBpriBmdyXhUbpv-GKM2bPmGvRn"
 
@@ -106,6 +108,10 @@ export async function ensureSpreadsheetSetup() {
     const sheetExists = response.data.sheets.some((sheet: any) => sheet.properties.title === SHEET_NAME)
     console.log(`Sheet "${SHEET_NAME}" tồn tại: ${sheetExists}`)
 
+    // Kiểm tra sheet Vi tồn tại
+    const viSheetExists = response.data.sheets.some((sheet: any) => sheet.properties.title === VI_SHEET_NAME)
+    console.log(`Sheet "${VI_SHEET_NAME}" tồn tại: ${viSheetExists}`)
+
     if (!sheetExists) {
       console.log(`Tạo sheet mới: ${SHEET_NAME}`)
       // Tạo sheet Transactions
@@ -136,6 +142,39 @@ export async function ensureSpreadsheetSetup() {
       })
 
       console.log("Đã tạo sheet và thêm tiêu đề thành công")
+    }
+
+    // Tạo sheet Vi nếu chưa tồn tại
+    if (!viSheetExists) {
+      console.log(`Tạo sheet mới: ${VI_SHEET_NAME}`)
+      // Tạo sheet Vi
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        resource: {
+          requests: [
+            {
+              addSheet: {
+                properties: {
+                  title: VI_SHEET_NAME,
+                },
+              },
+            },
+          ],
+        },
+      })
+
+      // Thêm tiêu đề cho sheet Vi
+      console.log("Thêm tiêu đề cho sheet Vi")
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${VI_SHEET_NAME}!A1:H1`,
+        valueInputOption: "RAW",
+        resource: {
+          values: [["Date", "Category", "Description", "Amount", "Type", "ReceiptLink", "Timestamp", "SubCategory"]],
+        },
+      })
+
+      console.log(`Đã tạo sheet ${VI_SHEET_NAME} và thêm tiêu đề thành công`)
     }
 
     return SPREADSHEET_ID
@@ -170,4 +209,29 @@ export async function ensureDriveFolderSetup() {
 export async function getGoogleSheetClient() {
   const { sheets } = await initGoogleAPIs()
   return sheets
+}
+
+// Thêm hàm kiểm tra sheet Vi
+export async function checkViSheetExists() {
+  try {
+    const { sheets } = await initGoogleAPIs()
+    const SPREADSHEET_ID = await getSpreadsheetId()
+
+    const sheetsInfo = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    })
+
+    const exists = sheetsInfo.data.sheets?.some((sheet) => sheet.properties?.title === VI_SHEET_NAME)
+    console.log(`Sheet "${VI_SHEET_NAME}" tồn tại: ${exists}`)
+
+    return exists
+  } catch (error) {
+    console.error(`Lỗi khi kiểm tra sheet ${VI_SHEET_NAME}:`, error)
+    throw error
+  }
+}
+
+// Thêm hàm lấy tên sheet Vi
+export async function getViSheetName() {
+  return VI_SHEET_NAME
 }
