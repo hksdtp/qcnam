@@ -87,7 +87,7 @@ export function AddTransactionDialog({
       }}
     >
       <DialogContent
-        className="sm:max-w-[425px] p-0 overflow-hidden bg-white"
+        className="sm:max-w-[400px] max-h-[90vh] p-0 overflow-y-auto bg-white"
         onInteractOutside={(e) => {
           // Ngăn chặn đóng dialog khi nhấn ra ngoài
           e.preventDefault()

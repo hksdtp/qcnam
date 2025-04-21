@@ -479,7 +479,7 @@ export function TransactionFormFixed({
   const submitting = externalIsSubmitting !== undefined ? externalIsSubmitting : isSubmitting
 
   return (
-    <div className="p-4">
+    <div className="p-2">
       <Tabs defaultValue={activeTab} onValueChange={(value) => handleTabChange(value as "expense" | "income")}>
         <TabsList className="w-full grid grid-cols-2 mb-4">
           <TabsTrigger
@@ -517,7 +517,7 @@ export function TransactionFormFixed({
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <TabsContent value="expense" className="mt-0 pt-0">
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center">
@@ -527,7 +527,7 @@ export function TransactionFormFixed({
                   <SelectTrigger className="rounded-lg h-10 bg-white">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white">
+                  <SelectContent position="popper" className="bg-white" align="start" sideOffset={5}>
                     {expenseCategories.map((category) => (
                       <SelectItem key={category} value={category} className="cursor-pointer">
                         {category}
@@ -539,7 +539,7 @@ export function TransactionFormFixed({
 
               {/* Hiển thị danh mục con cho chi phí xe ô tô */}
               {showCarSubcategories && (
-                <div className="space-y-2 mt-4">
+                <div className="space-y-2 mt-3">
                   <label className="text-sm font-medium flex items-center">
                     Loại chi phí xe <span className="text-red-500 ml-1">*</span>
                   </label>
@@ -551,7 +551,7 @@ export function TransactionFormFixed({
                     <SelectTrigger className="rounded-lg h-10 bg-white">
                       <SelectValue placeholder="Chọn loại chi phí xe" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px] overflow-y-auto bg-white">
+                    <SelectContent position="popper" className="bg-white" align="start" sideOffset={5}>
                       {carSubCategories.map((subCategory) => (
                         <SelectItem key={subCategory.id} value={subCategory.name} className="cursor-pointer">
                           {subCategory.name}
@@ -561,7 +561,7 @@ export function TransactionFormFixed({
                   </Select>
                   {/* Thêm trường nhập số lít xăng khi chọn Xăng */}
                   {formData.subCategory === "Xăng" && (
-                    <div className="space-y-2 mt-4">
+                    <div className="space-y-2 mt-3">
                       <label className="text-sm font-medium flex items-center">Số lít xăng</label>
                       <div className="relative">
                         <Input
@@ -591,7 +591,7 @@ export function TransactionFormFixed({
                   <SelectTrigger className="rounded-lg h-10 bg-white">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white">
+                  <SelectContent position="popper" className="bg-white" align="start" sideOffset={5}>
                     {incomeCategories.map((category) => (
                       <SelectItem key={category} value={category} className="cursor-pointer">
                         {category}
@@ -634,7 +634,7 @@ export function TransactionFormFixed({
               </div>
 
               {/* Hiển thị số tiền đã định dạng */}
-              {displayAmount && <div className="text-sm text-gray-600 mt-1">{displayAmount} đ</div>}
+              {displayAmount && <div className="text-sm text-gray-600 mt-1">{displayAmount} ₫</div>}
 
               {/* Hiển thị số tiền bằng chữ */}
               {amountInWords && <div className="text-xs text-gray-600 italic mt-1">{amountInWords}</div>}
@@ -649,7 +649,7 @@ export function TransactionFormFixed({
                       onClick={() => handleSelectAmountSuggestion(amount)}
                       className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs"
                     >
-                      {formatCurrency(amount)} đ
+                      {formatCurrency(amount)} ₫
                     </button>
                   ))}
                 </div>
@@ -668,7 +668,7 @@ export function TransactionFormFixed({
                 <SelectTrigger className="rounded-lg h-10 bg-white">
                   <SelectValue placeholder="Chọn phương thức" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent position="popper" className="bg-white" align="start" sideOffset={5}>
                   {paymentMethods.map((method) => (
                     <SelectItem key={method.id} value={method.id} className="cursor-pointer">
                       {method.name}
@@ -687,7 +687,7 @@ export function TransactionFormFixed({
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Hình ảnh (hóa đơn, biên lai...)</label>
-              <div className="border border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center">
+              <div className="border border-dashed border-gray-300 rounded-lg p-3 flex flex-col items-center justify-center">
                 <input
                   type="file"
                   id="receipt"
@@ -717,7 +717,7 @@ export function TransactionFormFixed({
               )}
             </div>
 
-            <div className="pt-4">
+            <div className="pt-3">
               <Button
                 type="submit"
                 disabled={submitting}
