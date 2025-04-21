@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useDate } from "@/lib/date-context"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatCurrency } from "@/lib/number-to-words"
+import { useAccountData } from "@/lib/hooks"
 
 interface AccountData {
   currentBalance: number // Số dư hiện có
@@ -31,15 +32,19 @@ interface AccountSheetIntegratedProps {
 export function AccountSheetIntegrated({ initialData, className }: AccountSheetIntegratedProps) {
   const { currentDate, setCurrentDate } = useDate()
   const [showDetails, setShowDetails] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isManualRefresh, setIsManualRefresh] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
-  const [accountData, setAccountData] = useState<AccountData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<string | null>(null)
   const { toast } = useToast()
+
+  // Sử dụng hook với tham số làm mới thủ công
+  const month = currentDate.getMonth() + 1
+  const year = currentDate.getFullYear()
+  const { accountData, isLoading, isError, errorMessage, mutate } = useAccountData(month, year)
 
   const monthNames = [
     "Tháng 1",
@@ -66,71 +71,35 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
     return Number(value)
   }
 
-  // Lấy dữ liệu tài khoản từ sheet Vi khi tháng thay đổi
-  const fetchAccountData = async () => {
-    setIsLoading(true)
-    setError(null)
+  // Cập nhật error state khi API trả về lỗi
+  useEffect(() => {
+    if (isError) {
+      setError(errorMessage || "Đã xảy ra lỗi khi lấy dữ liệu")
+    } else {
+      setError(null)
+    }
+  }, [isError, errorMessage])
 
+  // Hàm làm mới dữ liệu thủ công
+  const refreshData = useCallback(async () => {
+    setIsManualRefresh(true)
     try {
-      const month = currentDate.getMonth() + 1
-      const year = currentDate.getFullYear()
-
-      console.log(`Lấy dữ liệu số dư cho tháng ${month}/${year} từ Sheet1`)
-
-      // Gọi API để lấy dữ liệu tính toán từ Sheet1
-      const response = await fetch(`/api/account-data?month=${month}&year=${year}&timestamp=${Date.now()}`, {
-        cache: "no-store",
+      await mutate() // Làm mới dữ liệu từ API
+      toast({
+        title: "Đã làm mới dữ liệu",
+        description: "Dữ liệu tài khoản đã được cập nhật",
       })
-
-      if (!response.ok) {
-        throw new Error(`Lỗi API: ${response.status} ${response.statusText}`)
-      }
-
-      const result = await response.json()
-
-      if (!result.success) {
-        throw new Error(result.error || "Không thể lấy dữ liệu tài khoản")
-      }
-
-      // Đảm bảo tất cả các giá trị là số hợp lệ
-      const validData = {
-        currentBalance: ensureValidNumber(result.data.currentBalance),
-        totalExpense: ensureValidNumber(result.data.totalExpense),
-        beginningBalance: ensureValidNumber(result.data.beginningBalance),
-        totalAdvanced: ensureValidNumber(result.data.totalAdvanced),
-        accountRemaining: ensureValidNumber(result.data.accountRemaining),
-        accountExpenses: ensureValidNumber(result.data.accountExpenses),
-        cashRemaining: ensureValidNumber(result.data.cashRemaining),
-        cashExpenses: ensureValidNumber(result.data.cashExpenses),
-      }
-
-      // Cập nhật state với dữ liệu từ API
-      setAccountData(validData)
-      console.log("Dữ liệu tài khoản:", validData)
     } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu số dư:", error)
-      setError(error.message || "Đã xảy ra lỗi khi lấy dữ liệu")
-
-      // Trong trường hợp lỗi, hiển thị dữ liệu mẫu để kiểm tra giao diện
-      setAccountData({
-        currentBalance: 0,
-        totalExpense: 0,
-        beginningBalance: 0,
-        totalAdvanced: 0,
-        accountRemaining: 0,
-        accountExpenses: 0,
-        cashRemaining: 0,
-        cashExpenses: 0,
+      console.error("Lỗi khi làm mới dữ liệu:", error)
+      toast({
+        title: "Lỗi làm mới dữ liệu",
+        description: "Không thể cập nhật dữ liệu tài khoản",
+        variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setIsManualRefresh(false)
     }
-  }
-
-  // Lắng nghe sự thay đổi của tháng
-  useEffect(() => {
-    fetchAccountData()
-  }, [currentDate])
+  }, [mutate, toast])
 
   // Hàm đồng bộ dữ liệu tài khoản
   const syncAccountData = async () => {
@@ -167,8 +136,8 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
         description: `Đã cập nhật dữ liệu tài khoản cho tháng ${month}/${year}`,
       })
 
-      // Tải lại dữ liệu
-      await fetchAccountData()
+      // Làm mới dữ liệu
+      await mutate()
     } catch (error) {
       console.error("Lỗi khi đồng bộ dữ liệu tài khoản:", error)
       setError(error.message || "Đã xảy ra lỗi khi đồng bộ dữ liệu")
@@ -321,12 +290,21 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
               </p>
             )}
           </div>
-          {/* Thêm nút đồng bộ */}
-          <div>
+          {/* Thêm nút làm mới và đồng bộ */}
+          <div className="flex space-x-2">
+            <Button
+              onClick={refreshData}
+              disabled={isManualRefresh}
+              className="h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 p-0 flex items-center justify-center"
+              title="Làm mới dữ liệu"
+            >
+              <RefreshCw className={`h-4 w-4 ${isManualRefresh ? "animate-spin" : ""}`} />
+            </Button>
             <Button
               onClick={syncAccountData}
               disabled={isSyncing}
               className="h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 p-0 flex items-center justify-center"
+              title="Đồng bộ dữ liệu"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

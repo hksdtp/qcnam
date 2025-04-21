@@ -65,14 +65,24 @@ export async function fetchAllTransactions(): Promise<Transaction[]> {
         }
       }
 
+      // Xác định loại giao dịch
+      let type = "expense"
+      if (row[4] && typeof row[4] === "string") {
+        const lowerType = row[4].toLowerCase().trim()
+        if (lowerType === "income" || lowerType === "thu nhập" || lowerType === "thu" || lowerType === "nhập tiền") {
+          type = "income"
+        }
+      }
+
       // Ensure we have all required fields with proper defaults
       transactions.push({
         id: i.toString(),
+        rowIndex: i + 2, // Thêm rowIndex thực tế (vị trí hàng trong bảng tính)
         date: row[0] || "",
         category: row[1] || "",
         description: row[2] || "",
         amount: amount,
-        type: (row[4] || "expense").toLowerCase() === "income" ? "income" : "expense",
+        type: type,
         receiptLink: receiptLink,
         timestamp: row[6] || new Date().toISOString(),
         subCategory: row[7] || null, // Thêm subCategory nếu có
@@ -111,6 +121,7 @@ export async function fetchTransactionSummary() {
       totalIncome,
       totalExpense,
       balance,
+      timestamp: new Date().toISOString(), // Thêm timestamp để biết thời điểm tính toán
     }
   } catch (error) {
     console.error("Error calculating transaction summary:", error)
@@ -118,6 +129,7 @@ export async function fetchTransactionSummary() {
       totalIncome: 0,
       totalExpense: 0,
       balance: 0,
+      timestamp: new Date().toISOString(),
     }
   }
 }
@@ -399,6 +411,7 @@ export async function calculateAccountData(month: number, year: number) {
       cashRemaining,
       cashExpenses,
       totalFuel,
+      timestamp: new Date().toISOString(), // Thêm timestamp để biết thời điểm tính toán
     }
 
     console.log("Calculated account data:", result)
@@ -415,6 +428,7 @@ export async function calculateAccountData(month: number, year: number) {
       cashRemaining: 0,
       cashExpenses: 0,
       totalFuel: 0,
+      timestamp: new Date().toISOString(),
     }
   }
 }
