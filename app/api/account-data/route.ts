@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    console.log(`Đang tính toán dữ liệu tài khoản cho tháng ${month}/${year}`)
+
     // Nếu đang sử dụng mock service, trả về dữ liệu mẫu
     if (USE_MOCK_SERVICES) {
       // Dữ liệu mẫu cho tháng 4/2025
@@ -95,6 +97,8 @@ export async function GET(request: NextRequest) {
 
     // Tính toán dữ liệu tài khoản từ Sheet1
     const accountData = await calculateAccountData(month, year)
+
+    console.log(`Dữ liệu tài khoản đã tính toán:`, accountData)
 
     return NextResponse.json(
       {

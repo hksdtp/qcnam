@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { initGoogleAPIs, getSpreadsheetId } from "@/lib/google-service"
+import { parseDate } from "@/lib/data"
 
 // Đảm bảo API route này chạy trong Node.js runtime
 export const runtime = "nodejs"
@@ -24,34 +25,6 @@ function excelDateToJSDate(excelDate: number) {
   const millisecondsPerDay = 24 * 60 * 60 * 1000
   const offsetDays = excelDate - 25569 // 25569 là số ngày từ 1/1/1900 đến 1/1/1970
   return new Date(offsetDays * millisecondsPerDay)
-}
-
-// Hàm phân tích ngày tháng từ nhiều định dạng
-function parseDate(dateStr: string) {
-  // Kiểm tra xem dateStr có phải là số không
-  const excelDate = Number(dateStr)
-  if (!isNaN(excelDate)) {
-    // Nếu là số Excel, chuyển đổi thành đối tượng Date
-    const jsDate = excelDateToJSDate(excelDate)
-    return {
-      day: jsDate.getDate(),
-      month: jsDate.getMonth() + 1, // getMonth() trả về 0-11
-      year: jsDate.getFullYear(),
-    }
-  }
-
-  // Nếu không phải số, thử phân tích từ chuỗi DD/MM/YYYY
-  const dateParts = dateStr.split("/")
-  if (dateParts.length === 3) {
-    return {
-      day: Number.parseInt(dateParts[0]),
-      month: Number.parseInt(dateParts[1]),
-      year: Number.parseInt(dateParts[2]),
-    }
-  }
-
-  // Nếu không phân tích được, trả về null
-  return null
 }
 
 export async function GET(request: Request) {
@@ -127,8 +100,8 @@ export async function GET(request: Request) {
             continue
           }
 
-          // Phân tích ngày tháng
-          const dateInfo = parseDate(row[0])
+          // Phân tích ngày tháng - Sử dụng await vì parseDate giờ là async
+          const dateInfo = await parseDate(row[0])
 
           // Nếu không phân tích được ngày, bỏ qua
           if (!dateInfo) {
