@@ -438,3 +438,74 @@ export async function calculateAccountData(month: number, year: number) {
     }
   }
 }
+
+// Thêm các cải tiến mới để giải quyết vấn đề đồng bộ
+
+// Hàm để lấy dữ liệu tài khoản với timestamp để tránh cache
+export async function fetchAccountDataWithTimestamp(month: number, year: number) {
+  try {
+    // Thêm timestamp để tránh cache
+    const timestamp = new Date().getTime()
+    const url = `/api/account-data?month=${month}&year=${year}&t=${timestamp}`
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+      next: { revalidate: 0 },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Error fetching account data: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error("Error fetching account data:", error)
+    return null
+  }
+}
+
+// Hàm để đồng bộ dữ liệu tài khoản
+export async function syncAccountData(month: number, year: number) {
+  try {
+    // Thêm timestamp để tránh cache
+    const timestamp = new Date().getTime()
+    const url = `/api/sync-account-data?month=${month}&year=${year}&t=${timestamp}`
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+      next: { revalidate: 0 },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Error syncing account data: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error("Error syncing account data:", error)
+    return null
+  }
+}
+
+// Hàm định dạng tiền tệ an toàn - Chuyển thành async
+export async function safeFormatCurrency(amount: number | undefined | null): Promise<string> {
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    return "0 ₫"
+  }
+
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(amount)
+}

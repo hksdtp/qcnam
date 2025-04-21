@@ -19,7 +19,14 @@ export async function GET(request: NextRequest) {
           success: false,
           error: "Thiếu tham số tháng hoặc năm",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        },
       )
     }
 
@@ -32,7 +39,14 @@ export async function GET(request: NextRequest) {
           success: false,
           error: "Tham số tháng hoặc năm không hợp lệ",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        },
       )
     }
 
@@ -104,6 +118,7 @@ export async function GET(request: NextRequest) {
       {
         success: true,
         data: accountData,
+        timestamp: Date.now(), // Thêm timestamp để client biết thời điểm dữ liệu được tính toán
       },
       {
         headers: {
@@ -119,8 +134,16 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: error.message || "Đã xảy ra lỗi khi lấy dữ liệu tài khoản",
+        details: error.stack || "Không có thông tin chi tiết",
       },
-      { status: 500 },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      },
     )
   }
 }

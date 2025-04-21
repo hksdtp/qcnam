@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useDate } from "@/lib/date-context"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatCurrency } from "@/lib/number-to-words"
+import { useAccountData } from "@/lib/hooks"
 
 interface AccountData {
   currentBalance: number // Số dư hiện có
@@ -31,14 +32,23 @@ interface AccountSheetIntegratedProps {
 export function AccountSheetIntegrated({ initialData, className }: AccountSheetIntegratedProps) {
   const { currentDate, setCurrentDate } = useDate()
   const [showDetails, setShowDetails] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
-  const [accountData, setAccountData] = useState<AccountData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+  const lastSyncTimeRef = useRef<number>(Date.now())
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Sử dụng hook useAccountData để lấy dữ liệu tài khoản
+  const {
+    accountData,
+    isLoading,
+    isError,
+    errorMessage,
+    mutate: refreshAccountData,
+  } = useAccountData(currentDate.getMonth() + 1, currentDate.getFullYear())
 
   const monthNames = [
     "Tháng 1",
@@ -57,84 +67,40 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
 
   const years = Array.from({ length: 10 }, (_, i) => currentDate.getFullYear() - 5 + i)
 
-  // Hàm để đảm bảo giá trị là số hợp lệ
-  const ensureValidNumber = (value: any): number => {
-    if (value === undefined || value === null || isNaN(Number(value))) {
-      return 0
-    }
-    return Number(value)
-  }
-
-  // Lấy dữ liệu tài khoản từ API khi tháng thay đổi
-  const fetchAccountData = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const month = currentDate.getMonth() + 1
-      const year = currentDate.getFullYear()
-
-      console.log(`Lấy dữ liệu số dư cho tháng ${month}/${year} từ Sheet1`)
-
-      // Thêm timestamp để tránh cache
-      const response = await fetch(`/api/account-data?month=${month}&year=${year}&timestamp=${Date.now()}`, {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Lỗi API: ${response.status} ${response.statusText}`)
-      }
-
-      const result = await response.json()
-
-      if (!result.success) {
-        throw new Error(result.error || "Không thể lấy dữ liệu tài khoản")
-      }
-
-      // Đảm bảo tất cả các giá trị là số hợp lệ
-      const validData = {
-        currentBalance: ensureValidNumber(result.data.currentBalance),
-        totalExpense: ensureValidNumber(result.data.totalExpense),
-        beginningBalance: ensureValidNumber(result.data.beginningBalance),
-        totalAdvanced: ensureValidNumber(result.data.totalAdvanced),
-        accountRemaining: ensureValidNumber(result.data.accountRemaining),
-        accountExpenses: ensureValidNumber(result.data.accountExpenses),
-        cashRemaining: ensureValidNumber(result.data.cashRemaining),
-        cashExpenses: ensureValidNumber(result.data.cashExpenses),
-      }
-
-      // Cập nhật state với dữ liệu từ API
-      setAccountData(validData)
-      console.log("Dữ liệu tài khoản:", validData)
-    } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu số dư:", error)
-      setError(error.message || "Đã xảy ra lỗi khi lấy dữ liệu")
-
-      // Trong trường hợp lỗi, hiển thị dữ liệu mẫu để kiểm tra giao diện
-      setAccountData({
-        currentBalance: 0,
-        totalExpense: 0,
-        beginningBalance: 0,
-        totalAdvanced: 0,
-        accountRemaining: 0,
-        accountExpenses: 0,
-        cashRemaining: 0,
-        cashExpenses: 0,
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [currentDate])
-
-  // Lắng nghe sự thay đổi của tháng
+  // Cập nhật error state khi có lỗi từ hook
   useEffect(() => {
-    fetchAccountData()
-  }, [currentDate, fetchAccountData])
+    if (errorMessage) {
+      setError(errorMessage)
+    }
+  }, [errorMessage])
 
-  // Hàm đồng bộ dữ liệu tài khoản
+  // Thiết lập interval để tự động đồng bộ dữ liệu mỗi 30 giây
+  useEffect(() => {
+    // Xóa interval cũ nếu có
+    if (syncIntervalRef.current) {
+      clearInterval(syncIntervalRef.current)
+    }
+
+    // Thiết lập interval mới
+    syncIntervalRef.current = setInterval(() => {
+      // Chỉ tự động đồng bộ nếu đã qua 30 giây kể từ lần đồng bộ cuối
+      const now = Date.now()
+      if (now - lastSyncTimeRef.current > 30000) {
+        console.log("Tự động làm mới dữ liệu tài khoản...")
+        refreshAccountData()
+        lastSyncTimeRef.current = now
+      }
+    }, 30000)
+
+    // Cleanup khi component unmount
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current)
+      }
+    }
+  }, [refreshAccountData])
+
+  // Hàm đồng bộ dữ liệu tài khoản thủ công
   const syncAccountData = async () => {
     setIsSyncing(true)
     setError(null)
@@ -149,8 +115,14 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
         },
-        body: JSON.stringify({ month, year }),
+        body: JSON.stringify({
+          month,
+          year,
+          timestamp: Date.now(), // Thêm timestamp để tránh cache
+        }),
       })
 
       if (!response.ok) {
@@ -163,14 +135,17 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
         throw new Error(data.error || "Không thể đồng bộ dữ liệu tài khoản")
       }
 
+      // Cập nhật thời gian đồng bộ cuối
+      lastSyncTimeRef.current = Date.now()
+
+      // Làm mới dữ liệu
+      await refreshAccountData()
+
       // Hiển thị thông báo thành công
       toast({
         title: "Đồng bộ thành công",
         description: `Đã cập nhật dữ liệu tài khoản cho tháng ${month}/${year}`,
       })
-
-      // Tải lại dữ liệu
-      await fetchAccountData()
     } catch (error) {
       console.error("Lỗi khi đồng bộ dữ liệu tài khoản:", error)
       setError(error.message || "Đã xảy ra lỗi khi đồng bộ dữ liệu")
@@ -323,8 +298,16 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
               </p>
             )}
           </div>
-          {/* Chỉ giữ lại một nút đồng bộ */}
-          <div>
+          {/* Nút đồng bộ và làm mới */}
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => refreshAccountData()}
+              disabled={isLoading}
+              className="h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 p-0 flex items-center justify-center"
+              title="Làm mới dữ liệu"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            </Button>
             <Button
               onClick={syncAccountData}
               disabled={isSyncing}
