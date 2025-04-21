@@ -527,7 +527,7 @@ export function TransactionFormFixed({
                   <SelectTrigger className="rounded-lg h-10 bg-white">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="bg-white" align="start" sideOffset={5}>
+                  <SelectContent className="bg-white">
                     {expenseCategories.map((category) => (
                       <SelectItem key={category} value={category} className="cursor-pointer">
                         {category}
@@ -551,7 +551,7 @@ export function TransactionFormFixed({
                     <SelectTrigger className="rounded-lg h-10 bg-white">
                       <SelectValue placeholder="Chọn loại chi phí xe" />
                     </SelectTrigger>
-                    <SelectContent position="popper" className="bg-white" align="start" sideOffset={5}>
+                    <SelectContent className="bg-white">
                       {carSubCategories.map((subCategory) => (
                         <SelectItem key={subCategory.id} value={subCategory.name} className="cursor-pointer">
                           {subCategory.name}
@@ -591,7 +591,7 @@ export function TransactionFormFixed({
                   <SelectTrigger className="rounded-lg h-10 bg-white">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="bg-white" align="start" sideOffset={5}>
+                  <SelectContent className="bg-white">
                     {incomeCategories.map((category) => (
                       <SelectItem key={category} value={category} className="cursor-pointer">
                         {category}
@@ -668,7 +668,7 @@ export function TransactionFormFixed({
                 <SelectTrigger className="rounded-lg h-10 bg-white">
                   <SelectValue placeholder="Chọn phương thức" />
                 </SelectTrigger>
-                <SelectContent position="popper" className="bg-white" align="start" sideOffset={5}>
+                <SelectContent className="bg-white">
                   {paymentMethods.map((method) => (
                     <SelectItem key={method.id} value={method.id} className="cursor-pointer">
                       {method.name}
