@@ -317,7 +317,7 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
               <div className="h-8 w-32 bg-white/20 animate-pulse rounded-md mt-1"></div>
             ) : (
               <p className="text-2xl font-bold mt-1">
-                {accountData ? safeFormatCurrency(accountData.currentBalance) : "0"} đ
+                {accountData ? safeFormatCurrency(accountData.currentBalance) : "0"} ₫
               </p>
             )}
           </div>
@@ -366,7 +366,7 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
               <div className="h-6 w-24 bg-gray-100 animate-pulse rounded-md mt-1"></div>
             ) : (
               <p className="text-lg font-semibold text-techcom-red">
-                {accountData ? safeFormatCurrency(accountData.totalExpense) : "0"} đ
+                {accountData ? safeFormatCurrency(accountData.totalExpense) : "0"} ₫
               </p>
             )}
           </div>
@@ -386,42 +386,42 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
               <div className="text-sm text-techcom-lighttext">Số dư đầu kỳ</div>
               <div className="font-bold flex items-baseline text-techcom-text">
                 <span>{safeFormatCurrency(accountData.beginningBalance)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tổng đã ứng tháng này</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.totalAdvanced))}>
                 <span>{safeFormatCurrency(accountData.totalAdvanced)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tài khoản còn</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.accountRemaining))}>
                 <span>{safeFormatCurrency(accountData.accountRemaining)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tài khoản chi</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.accountExpenses, true))}>
                 <span>{safeFormatCurrency(accountData.accountExpenses)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tiền mặt còn</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.cashRemaining))}>
                 <span>{safeFormatCurrency(accountData.cashRemaining)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tiền mặt chi</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.cashExpenses, true))}>
                 <span>{safeFormatCurrency(accountData.cashExpenses)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
               </div>
             </div>
           </div>

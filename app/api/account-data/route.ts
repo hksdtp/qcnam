@@ -1,84 +1,87 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { calculateAccountData } from "@/lib/data"
-import { USE_MOCK_SERVICES, mockGetAccountData } from "@/lib/mock-service"
+import { USE_MOCK_SERVICES } from "@/lib/mock-service"
 
-// Đảm bảo API route này chạy trong Node.js runtime
-export const runtime = "nodejs"
-
-// Ngăn chặn caching để luôn lấy dữ liệu mới nhất
-export const dynamic = "force-dynamic"
-export const revalidate = 0
-
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    // Lấy tham số từ URL
-    const url = new URL(request.url)
-    const month = Number.parseInt(url.searchParams.get("month") || "0")
-    const year = Number.parseInt(url.searchParams.get("year") || "0")
+    // Lấy tham số tháng và năm từ query string
+    const searchParams = request.nextUrl.searchParams
+    const monthParam = searchParams.get("month")
+    const yearParam = searchParams.get("year")
 
-    console.log(`API: Lấy dữ liệu tài khoản cho tháng ${month}/${year}`)
-
-    // Nếu không có tháng hoặc năm, trả về lỗi
-    if (!month || !year) {
-      console.error("Thiếu tham số tháng hoặc năm")
+    if (!monthParam || !yearParam) {
       return NextResponse.json(
         {
           success: false,
-          error: "Tháng và năm là bắt buộc",
+          error: "Thiếu tham số tháng hoặc năm",
         },
         { status: 400 },
       )
     }
 
-    // Sử dụng mock data nếu USE_MOCK_SERVICES = true
+    const month = Number.parseInt(monthParam)
+    const year = Number.parseInt(yearParam)
+
+    if (isNaN(month) || isNaN(year) || month < 1 || month > 12) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Tham số tháng hoặc năm không hợp lệ",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Nếu đang sử dụng mock service, trả về dữ liệu mẫu
     if (USE_MOCK_SERVICES) {
-      console.log("Sử dụng mock data cho tài khoản")
-      const mockResult = await mockGetAccountData(month, year)
-      return NextResponse.json(mockResult, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
+      // Dữ liệu mẫu cho tháng 4/2025
+      if (month === 4 && year === 2025) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            currentBalance: -123409,
+            totalExpense: 469087,
+            beginningBalance: 0,
+            totalAdvanced: 0,
+            accountRemaining: -123409,
+            accountExpenses: 123409,
+            cashRemaining: 1654322,
+            cashExpenses: 345678,
+            totalFuel: 80,
+          },
+        })
+      }
+
+      // Dữ liệu mẫu cho các tháng khác
+      return NextResponse.json({
+        success: true,
+        data: {
+          currentBalance: 5000000,
+          totalExpense: 2500000,
+          beginningBalance: 3000000,
+          totalAdvanced: 4500000,
+          accountRemaining: 5000000,
+          accountExpenses: 2500000,
+          cashRemaining: 2000000,
+          cashExpenses: 500000,
+          totalFuel: 50,
         },
       })
     }
 
-    try {
-      // Tính toán dữ liệu tài khoản
-      const data = await calculateAccountData(month, year)
-      console.log("API: Dữ liệu tài khoản đã tính toán:", data)
+    // Tính toán dữ liệu tài khoản từ Sheet1
+    const accountData = await calculateAccountData(month, year)
 
-      // Trả về dữ liệu tài khoản - CHÚ Ý: Trả về trực tiếp trong data, không phải accountData
-      return NextResponse.json(
-        {
-          success: true,
-          data, // Trả về trực tiếp, không bọc trong accountData
-          source: "calculated",
-        },
-        {
-          headers: {
-            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        },
-      )
-    } catch (error) {
-      console.error("Lỗi khi tính toán dữ liệu tài khoản:", error)
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Lỗi khi tính toán dữ liệu tài khoản: ${error.message}`,
-        },
-        { status: 500 },
-      )
-    }
+    return NextResponse.json({
+      success: true,
+      data: accountData,
+    })
   } catch (error) {
-    console.error("Lỗi trong API route account-data:", error)
+    console.error("Error in account-data API:", error)
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Lỗi không xác định",
+        error: error.message || "Đã xảy ra lỗi khi lấy dữ liệu tài khoản",
       },
       { status: 500 },
     )

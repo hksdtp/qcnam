@@ -1,7 +1,7 @@
 export function formatCurrency(amount: number): string {
+  // Sử dụng Intl.NumberFormat nhưng loại bỏ ký hiệu tiền tệ
   return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
+    style: "decimal", // Thay đổi từ "currency" thành "decimal"
     maximumFractionDigits: 0,
   }).format(amount)
 }
