@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { fetchTransactionSummary } from "@/lib/data"
-import { USE_MOCK_SERVICES, mockGetTransactionSummary } from "@/lib/mock-service"
 
 // Đảm bảo API route này chạy trong Node.js runtime
 export const runtime = "nodejs"
@@ -19,19 +18,6 @@ export async function GET(request: Request) {
     const url = new URL(request.url)
     const forceRefresh = url.searchParams.get("refresh") === "true"
     const now = Date.now()
-
-    // Sử dụng mock data nếu USE_MOCK_SERVICES = true
-    if (USE_MOCK_SERVICES) {
-      console.log("Sử dụng mock data cho tổng kết giao dịch")
-      const mockResult = await mockGetTransactionSummary()
-      return NextResponse.json(mockResult, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      })
-    }
 
     // Return cached data if it's still fresh (unless force refresh is requested)
     if (!forceRefresh && summaryCache && now - lastFetched < CACHE_DURATION) {

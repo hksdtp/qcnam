@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { initGoogleAPIs, getSpreadsheetId } from "@/lib/google-service"
-import { USE_MOCK_SERVICES, mockGetTransactions } from "@/lib/mock-service"
 
 // Đảm bảo API route này chạy trong Node.js runtime
 export const runtime = "nodejs"
@@ -75,19 +74,6 @@ export async function GET(request: Request) {
         },
         { status: 400 },
       )
-    }
-
-    // Sử dụng mock data nếu USE_MOCK_SERVICES = true
-    if (USE_MOCK_SERVICES) {
-      console.log("Sử dụng mock data cho giao dịch")
-      const mockResult = await mockGetTransactions(month, year)
-      return NextResponse.json(mockResult, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      })
     }
 
     // Check cache first (unless force refresh is requested)

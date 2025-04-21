@@ -24,13 +24,6 @@ export function CarManagement() {
     return new Intl.NumberFormat("vi-VN").format(amount)
   }
 
-  // Calculate monthly distance
-  const monthlyDistance = carData ? carData.endKm - carData.startKm : 0
-
-  // Calculate actual fuel efficiency for the month
-  const actualFuelEfficiency =
-    monthlyDistance > 0 && carData?.totalFuelMonth > 0 ? (carData.totalFuelMonth / monthlyDistance) * 100 : 0
-
   if (isLoading) {
     return (
       <Card className="shadow-techcom hover:shadow-techcom-lg">
@@ -77,12 +70,7 @@ export function CarManagement() {
           <CarIcon className="h-4 w-4 mr-2" />
           Quản lý xe
         </CardTitle>
-        <Button
-          variant="default"
-          size="sm"
-          className="h-8 text-xs bg-red-500 hover:bg-red-600 text-white"
-          onClick={() => setShowEditForm(!showEditForm)}
-        >
+        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowEditForm(!showEditForm)}>
           {showEditForm ? "Đóng" : "Chỉnh sửa"}
         </Button>
       </CardHeader>
@@ -91,36 +79,17 @@ export function CarManagement() {
           <EditCarDataForm carData={carData} onClose={() => setShowEditForm(false)} />
         ) : (
           <div className="space-y-3">
-            {/* Monthly distance stats */}
+            {/* Main stats */}
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-3 rounded-lg">
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="text-xs text-muted-foreground">Quãng đường tháng này</div>
-                  <div className="text-xl font-semibold">{formatCurrency(monthlyDistance)} km</div>
+                  <div className="text-xs text-muted-foreground">Tiêu hao nhiên liệu</div>
+                  <div className="text-xl font-semibold">{carData.fuelEfficiency.toFixed(1)} lít/100km</div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Tiêu hao thực tế</div>
-                  <div className="text-xl font-semibold">{actualFuelEfficiency.toFixed(1)} lít/100km</div>
+                  <div className="text-xs text-muted-foreground">Tổng quãng đường</div>
+                  <div className="text-xl font-semibold">{formatCurrency(carData.totalDistance)} km</div>
                 </div>
-              </div>
-            </div>
-
-            {/* Odometer readings */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <CarIcon className="h-3 w-3" />
-                  <span>Km đầu tháng</span>
-                </div>
-                <div className="text-sm font-medium">{formatCurrency(carData.startKm)} km</div>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <CarIcon className="h-3 w-3" />
-                  <span>Km cuối tháng</span>
-                </div>
-                <div className="text-sm font-medium">{formatCurrency(carData.endKm)} km</div>
               </div>
             </div>
 
@@ -129,36 +98,17 @@ export function CarManagement() {
               <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                   <DropletIcon className="h-3 w-3" />
-                  <span>Xăng đã đổ tháng này</span>
+                  <span>Tổng xăng đã đổ</span>
                 </div>
-                <div className="text-sm font-medium">{carData.totalFuelMonth.toFixed(1)} lít</div>
+                <div className="text-sm font-medium">{carData.totalLiters.toFixed(1)} lít</div>
               </div>
 
               <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                   <BanknoteIcon className="h-3 w-3" />
-                  <span>Chi phí xăng tháng này</span>
+                  <span>Chi phí xăng</span>
                 </div>
-                <div className="text-sm font-medium">{formatCurrency(carData.fuelCost)} đ</div>
-              </div>
-            </div>
-
-            {/* Overall stats */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <DropletIcon className="h-3 w-3" />
-                  <span>Tiêu hao trung bình</span>
-                </div>
-                <div className="text-sm font-medium">{carData.fuelEfficiency.toFixed(1)} lít/100km</div>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <CarIcon className="h-3 w-3" />
-                  <span>Tổng quãng đường</span>
-                </div>
-                <div className="text-sm font-medium">{formatCurrency(carData.totalDistance)} km</div>
+                <div className="text-sm font-medium">{formatCurrency(carData.totalCost)} đ</div>
               </div>
             </div>
 
@@ -249,74 +199,10 @@ function EditCarDataForm({ carData, onClose }: { carData: any; onClose: () => vo
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="space-y-2">
-        {/* Monthly odometer readings */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label htmlFor="startKm" className="text-xs font-medium">
-              Km đầu tháng
-            </label>
-            <input
-              id="startKm"
-              name="startKm"
-              type="number"
-              step="0.1"
-              defaultValue={carData.startKm}
-              className="w-full p-1.5 text-sm border rounded-md mt-1"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="endKm" className="text-xs font-medium">
-              Km cuối tháng
-            </label>
-            <input
-              id="endKm"
-              name="endKm"
-              type="number"
-              step="0.1"
-              defaultValue={carData.endKm}
-              className="w-full p-1.5 text-sm border rounded-md mt-1"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Monthly fuel data */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label htmlFor="totalFuelMonth" className="text-xs font-medium">
-              Xăng đã đổ tháng này (lít)
-            </label>
-            <input
-              id="totalFuelMonth"
-              name="totalFuelMonth"
-              type="number"
-              step="0.1"
-              defaultValue={carData.totalFuelMonth}
-              className="w-full p-1.5 text-sm border rounded-md mt-1"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="fuelCost" className="text-xs font-medium">
-              Chi phí xăng tháng này
-            </label>
-            <input
-              id="fuelCost"
-              name="fuelCost"
-              type="number"
-              defaultValue={carData.fuelCost}
-              className="w-full p-1.5 text-sm border rounded-md mt-1"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Overall stats */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label htmlFor="fuelEfficiency" className="text-xs font-medium">
-              Tiêu hao trung bình (lít/100km)
+              Tiêu hao nhiên liệu (lít/100km)
             </label>
             <input
               id="fuelEfficiency"
@@ -409,7 +295,7 @@ function EditCarDataForm({ carData, onClose }: { carData: any; onClose: () => vo
         <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting} className="h-8">
           Hủy
         </Button>
-        <Button type="submit" size="sm" disabled={isSubmitting} className="h-8 bg-red-500 hover:bg-red-600 text-white">
+        <Button type="submit" size="sm" disabled={isSubmitting} className="h-8">
           {isSubmitting ? "Đang lưu..." : "Lưu"}
         </Button>
       </div>

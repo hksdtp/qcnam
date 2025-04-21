@@ -4,15 +4,10 @@ import { revalidatePath } from "next/cache"
 import { calculateAccountData } from "@/lib/data"
 import { clearTransactionsCache } from "@/app/api/transactions/route"
 import { clearSummaryCache } from "@/app/api/transaction-summary/route"
-import { USE_MOCK_SERVICES, mockAddTransaction, mockUpdateCarData } from "@/lib/mock-service"
-
-// Cache for Sheet1 existence check
-let sheet1ExistsCache = null
-let sheet1LastChecked = 0
-const SHEET1_CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+import { sheet1ExistsCache, sheet1LastChecked, SHEET1_CACHE_DURATION } from "@/lib/helpers"
 
 // Hàm tự động tính toán lại dữ liệu tài khoản cho tháng hiện tại
-async function autoRecalculateAccountData() {
+export async function autoRecalculateAccountData() {
   try {
     const currentDate = new Date()
     const month = currentDate.getMonth() + 1
@@ -44,12 +39,7 @@ async function autoRecalculateAccountData() {
 }
 
 // Hàm kiểm tra Sheet1 với caching
-async function checkSheet1Exists() {
-  // Nếu đang sử dụng mock services, luôn trả về true
-  if (USE_MOCK_SERVICES) {
-    return true
-  }
-
+export async function checkSheet1Exists() {
   const now = Date.now()
 
   // Return cached result if it's still fresh
@@ -82,18 +72,6 @@ async function checkSheet1Exists() {
 
 export async function addTransaction(formData: FormData) {
   console.log("Server Action: Thêm giao dịch mới")
-
-  // Sử dụng mock service nếu USE_MOCK_SERVICES = true
-  if (USE_MOCK_SERVICES) {
-    console.log("Sử dụng mock service cho thêm giao dịch")
-    const result = await mockAddTransaction(formData)
-
-    // Revalidate paths
-    revalidatePath("/")
-    revalidatePath("/transactions")
-
-    return result
-  }
 
   try {
     // Lấy dữ liệu từ formData
@@ -264,17 +242,6 @@ export async function syncAccountData(month: number, year: number) {
 export async function editTransaction(formData: FormData) {
   console.log("Server Action: Cập nhật giao dịch")
 
-  // Sử dụng mock service nếu USE_MOCK_SERVICES = true
-  if (USE_MOCK_SERVICES) {
-    console.log("Sử dụng mock service cho cập nhật giao dịch")
-
-    // Revalidate paths
-    revalidatePath("/")
-    revalidatePath("/transactions")
-
-    return { success: true }
-  }
-
   try {
     // Lấy dữ liệu từ formData
     const rowIndex = formData.get("rowIndex") as string
@@ -375,17 +342,6 @@ export async function editTransaction(formData: FormData) {
 export async function deleteTransaction(formData: FormData) {
   console.log("Server Action: Xóa giao dịch")
 
-  // Sử dụng mock service nếu USE_MOCK_SERVICES = true
-  if (USE_MOCK_SERVICES) {
-    console.log("Sử dụng mock service cho xóa giao dịch")
-
-    // Revalidate paths
-    revalidatePath("/")
-    revalidatePath("/transactions")
-
-    return { success: true }
-  }
-
   try {
     // Lấy rowIndex từ formData
     const rowIndex = formData.get("rowIndex") as string
@@ -441,92 +397,4 @@ export async function deleteTransaction(formData: FormData) {
       error: `Lỗi không xác định: ${error.message || "Lỗi không xác định"}`,
     }
   }
-}
-
-// Update car data
-export async function updateCarData(formData: FormData) {
-  // Sử dụng mock service nếu USE_MOCK_SERVICES = true
-  if (USE_MOCK_SERVICES) {
-    console.log("Sử dụng mock service cho cập nhật dữ liệu xe")
-    const result = await mockUpdateCarData(formData)
-
-    // Revalidate the dashboard page
-    revalidatePath("/")
-
-    return result
-  }
-
-  try {
-    // Đảm bảo sheet Xe tồn tại
-    const setupResult = await ensureCarSheetSetup()
-    if (!setupResult.success) {
-      throw new Error(setupResult.error || "Không thể thiết lập sheet Xe")
-    }
-
-    // Extract form data
-    const fuelEfficiency = formData.get("fuelEfficiency") as string
-    const totalDistance = formData.get("totalDistance") as string
-    const totalLiters = formData.get("totalLiters") as string
-    const totalCost = formData.get("totalCost") as string
-    const registrationDate = formData.get("registrationDate") as string
-    const insuranceDate = formData.get("insuranceDate") as string
-
-    // New fields
-    const startKm = formData.get("startKm") as string
-    const endKm = formData.get("endKm") as string
-    const totalFuelMonth = formData.get("totalFuelMonth") as string
-    const fuelCost = formData.get("fuelCost") as string
-
-    const { sheets } = await initGoogleAPIs()
-    const SPREADSHEET_ID = await getSpreadsheetId()
-    const SHEET_NAME = "Xe"
-
-    // Cập nhật dữ liệu trong sheet Xe
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A1:B15`,
-      valueInputOption: "RAW",
-      resource: {
-        values: [
-          ["Thông số", "Giá trị"],
-          ["Tiêu hao nhiên liệu", fuelEfficiency],
-          ["Tổng quãng đường", totalDistance],
-          ["Tổng số lít xăng đã đổ", totalLiters],
-          ["Tổng tiền xăng đã đổ", totalCost],
-          ["Hạn đăng kiểm", registrationDate],
-          ["Hạn bảo hiểm thân vỏ", insuranceDate],
-          ["Cập nhật lần cuối", new Date().toISOString()],
-          ["Km đầu tháng", startKm],
-          ["Km cuối tháng", endKm],
-          ["Xăng đã đổ tháng này", totalFuelMonth],
-          ["Chi phí xăng tháng này", fuelCost],
-        ],
-      },
-    })
-
-    // Revalidate the dashboard page
-    revalidatePath("/")
-
-    return {
-      success: true,
-      message: "Dữ liệu xe đã được cập nhật thành công",
-    }
-  } catch (error) {
-    console.error("Lỗi khi cập nhật dữ liệu xe:", error)
-    return {
-      success: false,
-      error: error.message || "Lỗi không xác định khi cập nhật dữ liệu xe",
-    }
-  }
-}
-
-// Placeholder function for car sheet setup
-async function ensureCarSheetSetup() {
-  // Nếu đang sử dụng mock services, luôn trả về true
-  if (USE_MOCK_SERVICES) {
-    return { success: true }
-  }
-
-  // Implement actual sheet setup logic here
-  return { success: true }
 }
