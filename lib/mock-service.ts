@@ -1,165 +1,125 @@
 // Cấu hình sử dụng mock service
 export const USE_MOCK_SERVICES = true
 
-// Mock data cho tài khoản
+// Mock data cho account-data API
 export async function mockGetAccountData(month: number, year: number) {
-  console.log(`Mock: Lấy dữ liệu tài khoản cho tháng ${month}/${year}`)
-
-  // Tạo dữ liệu giả
-  return {
-    success: true,
-    data: {
-      totalIncome: 15000000,
-      totalExpense: 8500000,
-      balance: 6500000,
-      categories: {
-        expense: [
-          { category: "Ăn uống", amount: 2500000 },
-          { category: "Đi lại", amount: 1500000 },
-          { category: "Mua sắm", amount: 2000000 },
-          { category: "Giải trí", amount: 1000000 },
-          { category: "Khác", amount: 1500000 },
-        ],
-        income: [
-          { category: "Lương", amount: 12000000 },
-          { category: "Thưởng", amount: 2000000 },
-          { category: "Khác", amount: 1000000 },
-        ],
-      },
-      source: "mock",
-    },
-  }
-}
-
-// Mock data cho giao dịch
-export async function mockGetTransactions(month: number, year: number) {
-  console.log(`Mock: Lấy giao dịch cho tháng ${month}/${year}`)
-
-  // Tạo dữ liệu giả
-  const transactions = []
-
-  // Tạo ngày trong tháng
-  const daysInMonth = new Date(year, month, 0).getDate()
-
-  // Danh sách danh mục
-  const expenseCategories = ["Ăn uống", "Đi lại", "Mua sắm", "Giải trí", "Khác"]
-  const incomeCategories = ["Lương", "Thưởng", "Khác"]
-
-  // Tạo giao dịch ngẫu nhiên
-  for (let i = 0; i < 20; i++) {
-    const day = Math.floor(Math.random() * daysInMonth) + 1
-    const type = Math.random() > 0.7 ? "income" : "expense"
-    const categories = type === "income" ? incomeCategories : expenseCategories
-    const category = categories[Math.floor(Math.random() * categories.length)]
-
-    const amount =
-      type === "income" ? Math.floor(Math.random() * 5000000) + 1000000 : Math.floor(Math.random() * 1000000) + 50000
-
-    transactions.push({
-      id: i.toString(),
-      rowIndex: i + 2,
-      date: `${day.toString().padStart(2, "0")}/${month.toString().padStart(2, "0")}/${year}`,
-      category: category,
-      description: `${type === "income" ? "Thu " : "Chi "} ${category.toLowerCase()}`,
-      amount: amount,
-      type: type,
-      receiptLink: null,
-      timestamp: new Date().toISOString(),
-      subCategory: null,
-      fuelLiters: null,
-      paymentMethod: "transfer",
-    })
+  // Tạo dữ liệu mẫu cho tài khoản
+  const mockData = {
+    currentBalance: 5000000, // Số dư hiện có
+    totalExpense: 8500000, // Tổng chi tiêu tháng
+    beginningBalance: 3000000, // Số dư đầu kỳ
+    totalAdvanced: 10500000, // Tổng đã ứng tháng này
+    accountRemaining: 5000000, // Tài khoản còn
+    accountExpenses: 8500000, // Tài khoản chi
+    cashRemaining: 2000000, // Tiền mặt còn
+    cashExpenses: 0, // Tiền mặt chi
+    totalFuel: 0, // Tổng lít xăng
   }
 
   return {
     success: true,
-    transactions: transactions,
-    debug: {
-      requestedMonth: month,
-      requestedYear: year,
-      totalRowsInSheet: transactions.length,
-      source: "mock",
-    },
-  }
-}
-
-// Mock data cho tổng kết giao dịch
-export async function mockGetTransactionSummary() {
-  console.log("Mock: Lấy tổng kết giao dịch")
-
-  return {
-    totalIncome: 15000000,
-    totalExpense: 8500000,
-    balance: 6500000,
+    data: mockData,
     source: "mock",
   }
 }
 
-// Mock data cho xe
-export async function mockGetCarData() {
-  console.log("Mock: Lấy dữ liệu xe")
+// Mock data cho transactions API
+export async function mockGetTransactions(month: number, year: number) {
+  // Tạo dữ liệu mẫu cho giao dịch
+  const mockTransactions = [
+    {
+      id: "1",
+      date: `${month < 10 ? "0" + month : month}/04/${year}`,
+      category: "Chi phí sinh hoạt",
+      description: "Tiền điện tháng 4",
+      amount: 500000,
+      type: "expense",
+      receiptLink: null,
+      timestamp: new Date().toISOString(),
+      paymentMethod: "card",
+    },
+    {
+      id: "2",
+      date: `${month < 10 ? "0" + month : month}/10/${year}`,
+      category: "Chi phí sinh hoạt",
+      description: "Tiền nước tháng 4",
+      amount: 200000,
+      type: "expense",
+      receiptLink: null,
+      timestamp: new Date().toISOString(),
+      paymentMethod: "card",
+    },
+    {
+      id: "3",
+      date: `${month < 10 ? "0" + month : month}/15/${year}`,
+      category: "Chi phí sinh hoạt",
+      description: "Tiền internet tháng 4",
+      amount: 300000,
+      type: "expense",
+      receiptLink: null,
+      timestamp: new Date().toISOString(),
+      paymentMethod: "card",
+    },
+    {
+      id: "4",
+      date: `${month < 10 ? "0" + month : month}/20/${year}`,
+      category: "Chi phí sinh hoạt",
+      description: "Tiền điện thoại tháng 4",
+      amount: 200000,
+      type: "expense",
+      receiptLink: null,
+      timestamp: new Date().toISOString(),
+      paymentMethod: "card",
+    },
+    {
+      id: "5",
+      date: `${month < 10 ? "0" + month : month}/01/${year}`,
+      category: "Lương",
+      description: "Lương tháng 4",
+      amount: 10500000,
+      type: "income",
+      receiptLink: null,
+      timestamp: new Date().toISOString(),
+      paymentMethod: "card",
+    },
+  ]
 
+  return {
+    success: true,
+    transactions: mockTransactions,
+  }
+}
+
+// Mock data cho transaction-summary API
+export async function mockGetTransactionSummary() {
+  return {
+    totalIncome: 10500000,
+    totalExpense: 8500000,
+    balance: 2000000,
+  }
+}
+
+// Mock data cho top-expense-categories API
+export async function mockGetTopExpenseCategories() {
+  return [
+    { category: "Chi phí sinh hoạt", amount: 1200000 },
+    { category: "Ăn uống", amount: 3000000 },
+    { category: "Di chuyển", amount: 1500000 },
+    { category: "Mua sắm", amount: 2000000 },
+    { category: "Giải trí", amount: 800000 },
+  ]
+}
+
+// Mock data cho car-data API
+export async function mockGetCarData() {
   return {
     success: true,
     carData: {
-      fuelEfficiency: "6.5",
-      totalDistance: "15000",
-      totalLiters: "975",
-      totalCost: "24375000",
-      registrationDate: "2023-12-31",
-      insuranceDate: "2023-12-31",
-      startKm: "12500",
-      endKm: "15000",
-      totalFuelMonth: "162.5",
-      fuelCost: "4062500",
+      totalFuel: 50,
+      totalDistance: 1000,
+      fuelEfficiency: 20,
+      totalFuelCost: 1500000,
+      costPerKm: 1500,
     },
-  }
-}
-
-// Mock function cho thêm giao dịch
-export async function mockAddTransaction(formData: FormData) {
-  console.log("Mock: Thêm giao dịch mới")
-
-  // Lấy dữ liệu từ formData
-  const date = formData.get("date") as string
-  const category = formData.get("category") as string
-  const description = formData.get("description") as string
-  const amountStr = formData.get("amount") as string
-  const type = formData.get("type") as string
-  const subCategory = (formData.get("subCategory") as string) || null
-  const fuelLiters = (formData.get("fuelLiters") as string) || null
-  const paymentMethod = (formData.get("paymentMethod") as string) || "transfer"
-
-  // Chuyển đổi số tiền thành số
-  const amount = Number(amountStr.replace(/[^\d]/g, ""))
-
-  // Tạo đối tượng giao dịch để trả về
-  const transaction = {
-    id: Date.now().toString(),
-    date,
-    category,
-    description,
-    amount,
-    type: type as "income" | "expense",
-    receiptLink: null,
-    timestamp: new Date().toISOString(),
-    subCategory,
-    fuelLiters,
-    paymentMethod,
-  }
-
-  return {
-    success: true,
-    transaction,
-  }
-}
-
-// Mock function cho cập nhật dữ liệu xe
-export async function mockUpdateCarData(formData: FormData) {
-  console.log("Mock: Cập nhật dữ liệu xe")
-
-  return {
-    success: true,
-    message: "Dữ liệu xe đã được cập nhật thành công (mock)",
   }
 }

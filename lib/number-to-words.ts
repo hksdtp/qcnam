@@ -1,95 +1,88 @@
-// Hàm chuyển đổi số thành chữ tiếng Việt
-export function amountToWords(amount: number): string {
-  if (amount === 0) return "Không đồng"
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
 
-  const units = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"]
-  const positions = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"]
+const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"]
 
-  // Hàm đọc số có 3 chữ số
-  const readThreeDigits = (num: number): string => {
-    const hundred = Math.floor(num / 100)
-    const ten = Math.floor((num % 100) / 10)
-    const unit = num % 10
-
-    let result = ""
-
-    if (hundred > 0) {
-      result += units[hundred] + " trăm "
-    }
-
-    if (ten > 0) {
-      if (ten === 1) {
-        result += "mười "
-      } else {
-        result += units[ten] + " mươi "
-      }
-
-      if (unit === 1 && ten > 1) {
-        result += "mốt"
-      } else if (unit === 5 && ten > 0) {
-        result += "lăm"
-      } else if (unit > 0) {
-        result += units[unit]
-      }
-    } else if (unit > 0) {
-      // Chỉ thêm "lẻ" khi có hàng trăm và không có hàng chục
-      if (hundred > 0) {
-        result += "lẻ " + units[unit]
-      } else {
-        // Nếu không có hàng trăm, chỉ đọc đơn vị
-        result += units[unit]
-      }
-    }
-
-    return result.trim()
+function amountToWords(amount: number): string {
+  if (amount === 0) {
+    return "không đồng"
   }
 
-  // Chuyển số thành chuỗi và chia thành các nhóm 3 chữ số
-  const amountStr = Math.floor(amount).toString()
-  const groups = []
+  let words = ""
+  let groupIndex = 0
+  let remaining = amount
 
-  for (let i = amountStr.length; i > 0; i -= 3) {
-    const start = Math.max(0, i - 3)
-    groups.unshift(Number.parseInt(amountStr.substring(start, i)))
+  while (remaining > 0) {
+    const groupValue = remaining % 1000
+    remaining = Math.floor(remaining / 1000)
+
+    if (groupValue > 0) {
+      const groupWords = readGroup(groupValue)
+      words = `${groupWords} ${units[groupIndex]} ${words}`
+    }
+
+    groupIndex++
   }
 
-  // Đọc từng nhóm và thêm đơn vị vị trí
+  return words.trim() + " đồng"
+}
+
+function readGroup(number: number): string {
+  const ones = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"]
+  const teens = [
+    "mười",
+    "mười một",
+    "mười hai",
+    "mười ba",
+    "mười bốn",
+    "mười lăm",
+    "mười sáu",
+    "mười bảy",
+    "mười tám",
+    "mười chín",
+  ]
+  const tens = ["", "", "hai mươi", "ba mươi", "bốn mươi", "năm mươi", "sáu mươi", "bảy mươi", "tám mươi", "chín mươi"]
+
   let result = ""
-  for (let i = 0; i < groups.length; i++) {
-    const group = groups[i]
-    const position = positions[groups.length - i - 1]
+  const hundreds = Math.floor(number / 100)
+  const remainder = number % 100
 
-    if (group > 0) {
-      result += readThreeDigits(group) + " " + position + " "
+  if (hundreds > 0) {
+    result += `${ones[hundreds]} trăm `
+  }
+
+  if (remainder > 0) {
+    if (remainder < 10) {
+      if (hundreds > 0) result += "lẻ "
+      result += ones[remainder]
+    } else if (remainder < 20) {
+      result = result + teens[remainder - 10]
+    } else {
+      const ten = Math.floor(remainder / 10)
+      const one = remainder % 10
+      result += tens[ten] + " "
+      if (one > 0) {
+        result += "lẻ " + ones[one]
+      }
     }
   }
 
-  return result.trim() + " đồng"
+  return result.trim()
 }
 
-// Hàm tạo các gợi ý số tiền dựa trên input
-export function generateAmountSuggestions(input: string): number[] {
-  if (!input || input === "0") return []
-
-  const num = Number.parseInt(input)
-  if (isNaN(num)) return []
-
-  const suggestions = []
-
-  // Thêm các gợi ý phổ biến
-  suggestions.push(num * 1000)
-  suggestions.push(num * 10000)
-  suggestions.push(num * 100000)
-
-  // Nếu số nhỏ, thêm các gợi ý lớn hơn
-  if (num < 100) {
-    suggestions.push(num * 1000000)
+function generateAmountSuggestions(amount: string): number[] {
+  const baseAmount = Number(amount)
+  if (isNaN(baseAmount)) {
+    return []
   }
 
-  return suggestions
+  const suggestions = [10000, 50000, 100000, 200000, 500000]
+  return suggestions.map((suggestion) => Math.round(baseAmount / suggestion) * suggestion)
 }
 
-// Hàm định dạng số tiền
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("vi-VN").format(amount)
-}
+export { amountToWords, generateAmountSuggestions }
