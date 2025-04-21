@@ -36,7 +36,7 @@ export async function fetchAllTransactions(): Promise<Transaction[]> {
       let amount = 0
       try {
         // Loại bỏ dấu phẩy ngăn cách hàng nghìn nếu có
-        const amountStr = (row[3] || "0").toString().replace(/,/g, "")
+        const amountStr = (row[3] || "0").toString().replace(/,/g, "").replace(/\./g, "")
         amount = Number.parseFloat(amountStr)
         if (isNaN(amount)) amount = 0
       } catch (e) {

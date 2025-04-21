@@ -321,8 +321,29 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
               </p>
             )}
           </div>
-          {/* Giữ nguyên bố cục nhưng ẩn nút đồng bộ */}
-          <div className="h-8 w-8"></div>
+          {/* Thêm nút đồng bộ */}
+          <div>
+            <Button
+              onClick={syncAccountData}
+              disabled={isSyncing}
+              className="h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 p-0 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`${isSyncing ? "animate-spin" : ""}`}
+              >
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+              </svg>
+            </Button>
+          </div>
         </div>
 
         <div

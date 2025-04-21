@@ -1,4 +1,4 @@
-export const formatCurrency = (amount: number): string => {
+export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
@@ -8,31 +8,29 @@ export const formatCurrency = (amount: number): string => {
 
 const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"]
 
-function amountToWords(amount: number): string {
+export function amountToWords(amount: number): string {
   if (amount === 0) {
     return "không đồng"
   }
 
   let words = ""
-  let groupIndex = 0
   let remaining = amount
+  let unitIndex = 0
 
   while (remaining > 0) {
-    const groupValue = remaining % 1000
-    remaining = Math.floor(remaining / 1000)
-
-    if (groupValue > 0) {
-      const groupWords = readGroup(groupValue)
-      words = `${groupWords} ${units[groupIndex]} ${words}`
+    const segment = remaining % 1000
+    if (segment > 0) {
+      const segmentWords = readSegment(segment)
+      words = `${segmentWords} ${units[unitIndex]} ${words}`
     }
-
-    groupIndex++
+    remaining = Math.floor(remaining / 1000)
+    unitIndex++
   }
 
   return words.trim() + " đồng"
 }
 
-function readGroup(number: number): string {
+function readSegment(segment: number): string {
   const ones = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"]
   const teens = [
     "mười",
@@ -48,41 +46,38 @@ function readGroup(number: number): string {
   ]
   const tens = ["", "", "hai mươi", "ba mươi", "bốn mươi", "năm mươi", "sáu mươi", "bảy mươi", "tám mươi", "chín mươi"]
 
-  let result = ""
-  const hundreds = Math.floor(number / 100)
-  const remainder = number % 100
-
-  if (hundreds > 0) {
-    result += `${ones[hundreds]} trăm `
+  let words = ""
+  const hundred = Math.floor(segment / 100)
+  if (hundred > 0) {
+    words += `${ones[hundred]} trăm `
   }
 
+  const remainder = segment % 100
   if (remainder > 0) {
     if (remainder < 10) {
-      if (hundreds > 0) result += "lẻ "
-      result += ones[remainder]
+      if (hundred > 0) words += "lẻ "
+      words += ones[remainder]
     } else if (remainder < 20) {
-      result = result + teens[remainder - 10]
+      words += teens[remainder - 10]
     } else {
       const ten = Math.floor(remainder / 10)
+      words += tens[ten] + " "
       const one = remainder % 10
-      result += tens[ten] + " "
       if (one > 0) {
-        result += "lẻ " + ones[one]
+        words += one === 5 ? "lăm" : ones[one]
       }
     }
   }
 
-  return result.trim()
+  return words
 }
 
-function generateAmountSuggestions(amount: string): number[] {
-  const baseAmount = Number(amount)
-  if (isNaN(baseAmount)) {
+export function generateAmountSuggestions(amountStr: string): number[] {
+  const amount = Number(amountStr)
+  if (isNaN(amount)) {
     return []
   }
 
-  const suggestions = [10000, 50000, 100000, 200000, 500000]
-  return suggestions.map((suggestion) => Math.round(baseAmount / suggestion) * suggestion)
+  const base = Math.pow(10, amountStr.length - 1)
+  return [base, base * 2, base * 5]
 }
-
-export { amountToWords, generateAmountSuggestions }
