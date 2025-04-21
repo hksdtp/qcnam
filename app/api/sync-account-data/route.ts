@@ -26,7 +26,6 @@ export async function POST(request: Request) {
     // Revalidate các trang liên quan
     revalidatePath("/")
     revalidatePath("/transactions")
-    revalidatePath(`/api/account-data?month=${month}&year=${year}`)
 
     return NextResponse.json(
       {
@@ -34,7 +33,6 @@ export async function POST(request: Request) {
         data: accountData,
         month,
         year,
-        timestamp: Date.now(),
       },
       {
         headers: {
@@ -51,16 +49,8 @@ export async function POST(request: Request) {
         success: false,
         error: error.message || "Unknown error",
         details: error.stack,
-        timestamp: Date.now(),
       },
-      {
-        status: 500,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      },
+      { status: 500 },
     )
   }
 }

@@ -65,24 +65,14 @@ export async function fetchAllTransactions(): Promise<Transaction[]> {
         }
       }
 
-      // Xác định loại giao dịch
-      let type = "expense"
-      if (row[4] && typeof row[4] === "string") {
-        const lowerType = row[4].toLowerCase().trim()
-        if (lowerType === "income" || lowerType === "thu nhập" || lowerType === "thu" || lowerType === "nhập tiền") {
-          type = "income"
-        }
-      }
-
       // Ensure we have all required fields with proper defaults
       transactions.push({
         id: i.toString(),
-        rowIndex: i + 2, // Thêm rowIndex thực tế (vị trí hàng trong bảng tính)
         date: row[0] || "",
         category: row[1] || "",
         description: row[2] || "",
         amount: amount,
-        type: type,
+        type: (row[4] || "expense").toLowerCase() === "income" ? "income" : "expense",
         receiptLink: receiptLink,
         timestamp: row[6] || new Date().toISOString(),
         subCategory: row[7] || null, // Thêm subCategory nếu có
@@ -106,77 +96,6 @@ export async function fetchAllTransactions(): Promise<Transaction[]> {
   }
 }
 
-// Hàm để phân tích ngày tháng từ chuỗi - Chuyển thành async
-export async function parseDate(dateString: string): Promise<{ day: number; month: number; year: number } | null> {
-  try {
-    console.log(`Đang phân tích ngày: "${dateString}"`)
-
-    // Nếu là số, có thể là định dạng Excel
-    if (!isNaN(Number(dateString))) {
-      const excelDate = Number(dateString)
-      // Chuyển đổi từ Excel date sang JavaScript date
-      const jsDate = new Date((excelDate - 25569) * 86400 * 1000)
-      console.log(`  Phân tích Excel date ${excelDate} thành:`, jsDate)
-      return {
-        day: jsDate.getDate(),
-        month: jsDate.getMonth() + 1,
-        year: jsDate.getFullYear(),
-      }
-    }
-
-    // Kiểm tra định dạng DD/MM/YYYY
-    if (dateString.includes("/")) {
-      const parts = dateString.split("/")
-      if (parts.length === 3) {
-        const day = Number.parseInt(parts[0], 10)
-        const month = Number.parseInt(parts[1], 10)
-        const year = Number.parseInt(parts[2], 10)
-
-        // Kiểm tra tính hợp lệ
-        if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day > 0 && day <= 31 && month > 0 && month <= 12) {
-          console.log(`  Phân tích DD/MM/YYYY thành: ${day}/${month}/${year}`)
-          return { day, month, year }
-        }
-      }
-    }
-
-    // Kiểm tra định dạng YYYY-MM-DD
-    if (dateString.includes("-")) {
-      const parts = dateString.split("-")
-      if (parts.length === 3) {
-        const year = Number.parseInt(parts[0], 10)
-        const month = Number.parseInt(parts[1], 10)
-        const day = Number.parseInt(parts[2], 10)
-
-        // Kiểm tra tính hợp lệ
-        if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day > 0 && day <= 31 && month > 0 && month <= 12) {
-          console.log(`  Phân tích YYYY-MM-DD thành: ${day}/${month}/${year}`)
-          return { day, month, year }
-        }
-      }
-    }
-
-    // Thử phân tích bằng Date constructor
-    const date = new Date(dateString)
-    if (!isNaN(date.getTime())) {
-      console.log(
-        `  Phân tích bằng Date constructor thành: ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`,
-      )
-      return {
-        day: date.getDate(),
-        month: date.getMonth() + 1,
-        year: date.getFullYear(),
-      }
-    }
-
-    console.error(`  Không thể phân tích ngày: ${dateString}`)
-    return null
-  } catch (error) {
-    console.error(`Error parsing date ${dateString}:`, error)
-    return null
-  }
-}
-
 // Các hàm khác giữ nguyên
 export async function fetchTransactionSummary() {
   try {
@@ -192,7 +111,6 @@ export async function fetchTransactionSummary() {
       totalIncome,
       totalExpense,
       balance,
-      timestamp: new Date().toISOString(), // Thêm timestamp để biết thời điểm tính toán
     }
   } catch (error) {
     console.error("Error calculating transaction summary:", error)
@@ -200,7 +118,6 @@ export async function fetchTransactionSummary() {
       totalIncome: 0,
       totalExpense: 0,
       balance: 0,
-      timestamp: new Date().toISOString(),
     }
   }
 }
@@ -274,6 +191,79 @@ export async function fetchFilteredTransactions(filters?: {
   }
 }
 
+// Cải thiện hàm parseDate để xử lý nhiều định dạng ngày tháng hơn
+
+// Hàm để phân tích ngày tháng từ chuỗi
+function parseDate(dateString: string): { day: number; month: number; year: number } | null {
+  try {
+    console.log(`Đang phân tích ngày: "${dateString}"`)
+
+    // Nếu là số, có thể là định dạng Excel
+    if (!isNaN(Number(dateString))) {
+      const excelDate = Number(dateString)
+      // Chuyển đổi từ Excel date sang JavaScript date
+      const jsDate = new Date((excelDate - 25569) * 86400 * 1000)
+      console.log(`  Phân tích Excel date ${excelDate} thành:`, jsDate)
+      return {
+        day: jsDate.getDate(),
+        month: jsDate.getMonth() + 1,
+        year: jsDate.getFullYear(),
+      }
+    }
+
+    // Kiểm tra định dạng DD/MM/YYYY
+    if (dateString.includes("/")) {
+      const parts = dateString.split("/")
+      if (parts.length === 3) {
+        const day = Number.parseInt(parts[0], 10)
+        const month = Number.parseInt(parts[1], 10)
+        const year = Number.parseInt(parts[2], 10)
+
+        // Kiểm tra tính hợp lệ
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day > 0 && day <= 31 && month > 0 && month <= 12) {
+          console.log(`  Phân tích DD/MM/YYYY thành: ${day}/${month}/${year}`)
+          return { day, month, year }
+        }
+      }
+    }
+
+    // Kiểm tra định dạng YYYY-MM-DD
+    if (dateString.includes("-")) {
+      const parts = dateString.split("-")
+      if (parts.length === 3) {
+        const year = Number.parseInt(parts[0], 10)
+        const month = Number.parseInt(parts[1], 10)
+        const day = Number.parseInt(parts[2], 10)
+
+        // Kiểm tra tính hợp lệ
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day > 0 && day <= 31 && month > 0 && month <= 12) {
+          console.log(`  Phân tích YYYY-MM-DD thành: ${day}/${month}/${year}`)
+          return { day, month, year }
+        }
+      }
+    }
+
+    // Thử phân tích bằng Date constructor
+    const date = new Date(dateString)
+    if (!isNaN(date.getTime())) {
+      console.log(
+        `  Phân tích bằng Date constructor thành: ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`,
+      )
+      return {
+        day: date.getDate(),
+        month: date.getMonth() + 1,
+        year: date.getFullYear(),
+      }
+    }
+
+    console.error(`  Không thể phân tích ngày: ${dateString}`)
+    return null
+  } catch (error) {
+    console.error(`Error parsing date ${dateString}:`, error)
+    return null
+  }
+}
+
 // Thêm hàm mới để tính toán dữ liệu tài khoản trực tiếp từ Sheet1
 export async function calculateAccountData(month: number, year: number) {
   try {
@@ -282,20 +272,16 @@ export async function calculateAccountData(month: number, year: number) {
     console.log(`Total transactions for calculation: ${transactions.length}`)
 
     // Lọc giao dịch theo tháng/năm
-    const filteredTransactions = []
+    const filteredTransactions = transactions.filter((transaction) => {
+      if (!transaction.date) return false
 
-    for (const transaction of transactions) {
-      if (!transaction.date) continue
-
-      // Phân tích ngày tháng - sử dụng await vì parseDate giờ là async
-      const dateInfo = await parseDate(transaction.date)
-      if (!dateInfo) continue
+      // Phân tích ngày tháng
+      const dateInfo = parseDate(transaction.date)
+      if (!dateInfo) return false
 
       // So sánh tháng và năm
-      if (dateInfo.month === month && dateInfo.year === year) {
-        filteredTransactions.push(transaction)
-      }
-    }
+      return dateInfo.month === month && dateInfo.year === year
+    })
 
     console.log(`Filtered transactions for ${month}/${year}: ${filteredTransactions.length}`)
     if (filteredTransactions.length > 0) {
@@ -362,20 +348,16 @@ export async function calculateAccountData(month: number, year: number) {
     const prevYear = month === 1 ? year - 1 : year
 
     // Lọc tất cả giao dịch từ đầu đến hết tháng trước
-    const prevTransactions = []
+    const prevTransactions = transactions.filter((transaction) => {
+      if (!transaction.date) return false
 
-    for (const transaction of transactions) {
-      if (!transaction.date) continue
-
-      // Phân tích ngày tháng - sử dụng await vì parseDate giờ là async
-      const dateInfo = await parseDate(transaction.date)
-      if (!dateInfo) continue
+      // Phân tích ngày tháng
+      const dateInfo = parseDate(transaction.date)
+      if (!dateInfo) return false
 
       // Giao dịch trước hoặc trong tháng trước
-      if (dateInfo.year < prevYear || (dateInfo.year === prevYear && dateInfo.month <= prevMonth)) {
-        prevTransactions.push(transaction)
-      }
-    }
+      return dateInfo.year < prevYear || (dateInfo.year === prevYear && dateInfo.month <= prevMonth)
+    })
 
     console.log(`Previous transactions count: ${prevTransactions.length}`)
 
@@ -417,7 +399,6 @@ export async function calculateAccountData(month: number, year: number) {
       cashRemaining,
       cashExpenses,
       totalFuel,
-      timestamp: new Date().toISOString(), // Thêm timestamp để biết thời điểm tính toán
     }
 
     console.log("Calculated account data:", result)
@@ -434,78 +415,6 @@ export async function calculateAccountData(month: number, year: number) {
       cashRemaining: 0,
       cashExpenses: 0,
       totalFuel: 0,
-      timestamp: new Date().toISOString(),
     }
   }
-}
-
-// Thêm các cải tiến mới để giải quyết vấn đề đồng bộ
-
-// Hàm để lấy dữ liệu tài khoản với timestamp để tránh cache
-export async function fetchAccountDataWithTimestamp(month: number, year: number) {
-  try {
-    // Thêm timestamp để tránh cache
-    const timestamp = new Date().getTime()
-    const url = `/api/account-data?month=${month}&year=${year}&t=${timestamp}`
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-      next: { revalidate: 0 },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Error fetching account data: ${response.status}`)
-    }
-
-    return await response.json()
-  } catch (error) {
-    console.error("Error fetching account data:", error)
-    return null
-  }
-}
-
-// Hàm để đồng bộ dữ liệu tài khoản
-export async function syncAccountData(month: number, year: number) {
-  try {
-    // Thêm timestamp để tránh cache
-    const timestamp = new Date().getTime()
-    const url = `/api/sync-account-data?month=${month}&year=${year}&t=${timestamp}`
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-      next: { revalidate: 0 },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Error syncing account data: ${response.status}`)
-    }
-
-    return await response.json()
-  } catch (error) {
-    console.error("Error syncing account data:", error)
-    return null
-  }
-}
-
-// Hàm định dạng tiền tệ an toàn - Chuyển thành async
-export async function safeFormatCurrency(amount: number | undefined | null): Promise<string> {
-  if (amount === undefined || amount === null || isNaN(amount)) {
-    return "0 ₫"
-  }
-
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(amount)
 }
