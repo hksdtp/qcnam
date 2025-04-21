@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { format, addMonths, subMonths, getMonth, getYear } from "date-fns"
 
 // iOS/macOS style Date Picker component
-const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }) => {
+export const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }) => {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [currentDate, setCurrentDate] = useState(initialDate)
   const [currentMonth, setCurrentMonth] = useState(initialDate)
@@ -376,4 +376,5 @@ const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }) => {
   )
 }
 
+// Thêm export default để đảm bảo tương thích với cả hai cách import
 export default IOSDatePicker

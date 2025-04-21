@@ -3,24 +3,72 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { TransactionFormFixed } from "@/components/transaction-form-fixed"
+import { editTransaction } from "@/lib/actions"
+import { useToast } from "@/components/ui/use-toast"
+import type { Transaction } from "@/lib/types"
 
 interface EditTransactionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  transaction: any // Replace 'any' with a more specific type if available
-  onSuccess: () => void
+  transaction: Transaction & { rowIndex?: number }
+  onComplete?: () => void
+  onSuccess?: () => void
 }
 
-export function EditTransactionDialog({ open, onOpenChange, transaction, onSuccess }: EditTransactionDialogProps) {
+export function EditTransactionDialog({
+  open,
+  onOpenChange,
+  transaction,
+  onComplete,
+  onSuccess,
+}: EditTransactionDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toast } = useToast()
 
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsSubmitting(false)
-    onSuccess()
-    onOpenChange(false)
+
+    try {
+      // Đảm bảo rowIndex được thêm vào formData
+      if (transaction.rowIndex) {
+        formData.append("rowIndex", transaction.rowIndex.toString())
+      }
+
+      console.log("Submitting edit with rowIndex:", transaction.rowIndex)
+
+      const result = await editTransaction(formData)
+
+      if (result.success) {
+        toast({
+          title: "Cập nhật thành công",
+          description: "Giao dịch đã được cập nhật",
+        })
+
+        // Gọi callback onSuccess nếu có
+        if (onSuccess) onSuccess()
+
+        // Gọi callback onComplete nếu có
+        if (onComplete) onComplete()
+
+        // Đóng dialog
+        onOpenChange(false)
+      } else {
+        toast({
+          title: "Lỗi khi cập nhật giao dịch",
+          description: result.error || "Đã xảy ra lỗi không xác định",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error updating transaction:", error)
+      toast({
+        title: "Lỗi khi cập nhật giao dịch",
+        description: error.message || "Đã xảy ra lỗi không xác định",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -30,11 +78,13 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, onSucce
           <DialogTitle>Chỉnh sửa giao dịch</DialogTitle>
         </DialogHeader>
         <TransactionFormFixed
+          initialData={transaction}
           initialType={transaction.type}
-          currentDate={new Date(transaction.date)}
+          currentDate={new Date(transaction.date.split("/").reverse().join("-"))}
           onSuccess={onSuccess}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
+          isEditing={true}
         />
       </DialogContent>
     </Dialog>

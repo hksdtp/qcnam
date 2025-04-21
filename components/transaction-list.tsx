@@ -13,6 +13,7 @@ import { useTransactions } from "@/lib/hooks"
 import { Skeleton } from "@/components/ui/skeleton"
 import { deleteTransaction } from "@/lib/actions"
 import { useToast } from "@/components/ui/use-toast"
+import type { Transaction } from "@/lib/types"
 
 export function TransactionList({
   category = "all",
@@ -26,7 +27,7 @@ export function TransactionList({
   const year = currentDate.getFullYear()
 
   const { transactions, isLoading, mutate } = useTransactions(month, year)
-  const [editingTransaction, setEditingTransaction] = useState<any>(null)
+  const [editingTransaction, setEditingTransaction] = useState<(Transaction & { rowIndex?: number }) | null>(null)
   const { toast } = useToast()
 
   // Filter transactions based on props
@@ -48,15 +49,22 @@ export function TransactionList({
       return dateB.getTime() - dateA.getTime()
     })
 
-  const handleEdit = (transaction: any) => {
-    setEditingTransaction(transaction)
+  const handleEdit = (transaction: Transaction) => {
+    console.log("Editing transaction:", transaction)
+    // Đảm bảo rowIndex được truyền đúng
+    const rowIndex = transaction.rowIndex || Number(transaction.id) + 2
+    setEditingTransaction({ ...transaction, rowIndex })
   }
 
-  const handleDelete = async (transaction: any) => {
+  const handleDelete = async (transaction: Transaction) => {
     if (!confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return
 
     const formData = new FormData()
-    formData.append("rowIndex", transaction.rowIndex.toString())
+    // Đảm bảo rowIndex được truyền đúng
+    const rowIndex = transaction.rowIndex || Number(transaction.id) + 2
+    formData.append("rowIndex", rowIndex.toString())
+
+    console.log("Deleting transaction with rowIndex:", rowIndex)
 
     try {
       const result = await deleteTransaction(formData)
