@@ -87,7 +87,7 @@ export function AddTransactionDialog({
       }}
     >
       <DialogContent
-        className="sm:max-w-[400px] max-h-[90vh] p-0 overflow-hidden bg-white"
+        className="sm:max-w-[425px] p-0 overflow-hidden bg-white"
         onInteractOutside={(e) => {
           // Ngăn chặn đóng dialog khi nhấn ra ngoài
           e.preventDefault()
@@ -106,28 +106,13 @@ export function AddTransactionDialog({
             <span className="sr-only">Đóng</span>
           </Button>
         </DialogHeader>
-        <div className="overflow-y-auto max-h-[calc(90vh-60px)]">
-          <div className="p-4 bg-white">
-            <TransactionFormFixed
-              onSuccess={() => onOpenChange(false)}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              initialType={initialType}
-            />
-          </div>
-        </div>
-        <div className="px-4 py-3 border-t flex justify-end gap-2 sticky bottom-0 bg-white z-10">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting} className="h-9">
-            Hủy
-          </Button>
-          <Button
-            type="submit"
-            form="transaction-form"
-            disabled={isSubmitting}
-            className="bg-techcom-red hover:bg-techcom-darkred text-white h-9"
-          >
-            {isSubmitting ? "Đang lưu..." : "Lưu"}
-          </Button>
+        <div className="p-4 bg-white">
+          <TransactionFormFixed
+            onSuccess={() => onOpenChange(false)}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            initialType={initialType}
+          />
         </div>
       </DialogContent>
     </Dialog>

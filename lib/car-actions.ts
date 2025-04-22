@@ -47,7 +47,7 @@ export async function ensureCarSheetSetup() {
       console.log("Thêm tiêu đề và dữ liệu mẫu cho sheet")
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A1:B10`,
+        range: `${SHEET_NAME}!A1:B15`,
         valueInputOption: "RAW",
         resource: {
           values: [
@@ -59,8 +59,10 @@ export async function ensureCarSheetSetup() {
             ["Hạn đăng kiểm", "1/4/2025"],
             ["Hạn bảo hiểm thân vỏ", "1/4/2025"],
             ["Cập nhật lần cuối", new Date().toISOString()],
-            ["Tổng xăng đã đổ tháng này", "25"],
-            ["Chi phí xăng tháng này", "950000"],
+            ["Km đầu tháng", "1200"],
+            ["Km cuối tháng", "1300"],
+            ["Xăng đã đổ tháng này", "7.5"],
+            ["Chi phí xăng tháng này", "285000"],
           ],
         },
       })
@@ -91,7 +93,7 @@ export async function getCarData() {
     // Lấy dữ liệu từ sheet Xe
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A1:B10`,
+      range: `${SHEET_NAME}!A1:B15`,
     })
 
     const values = response.data.values || []
@@ -129,8 +131,10 @@ export async function getCarData() {
         insuranceDate: carData["Hạn bảo hiểm thân vỏ"] || "",
         insuranceDaysLeft,
         lastUpdated: carData["Cập nhật lần cuối"] || new Date().toISOString(),
-        // Add monthly data
-        totalFuel: Number.parseFloat(carData["Tổng xăng đã đổ tháng này"] || "0"),
+        // Monthly data
+        startKm: Number.parseFloat(carData["Km đầu tháng"] || "0"),
+        endKm: Number.parseFloat(carData["Km cuối tháng"] || "0"),
+        totalFuelMonth: Number.parseFloat(carData["Xăng đã đổ tháng này"] || "0"),
         fuelCost: Number.parseFloat(carData["Chi phí xăng tháng này"] || "0"),
       },
     }
@@ -160,6 +164,12 @@ export async function updateCarData(formData: FormData) {
     const registrationDate = formData.get("registrationDate") as string
     const insuranceDate = formData.get("insuranceDate") as string
 
+    // New fields
+    const startKm = formData.get("startKm") as string
+    const endKm = formData.get("endKm") as string
+    const totalFuelMonth = formData.get("totalFuelMonth") as string
+    const fuelCost = formData.get("fuelCost") as string
+
     const { sheets } = await initGoogleAPIs()
     const SPREADSHEET_ID = await getSpreadsheetId()
     const SHEET_NAME = "Xe"
@@ -167,7 +177,7 @@ export async function updateCarData(formData: FormData) {
     // Cập nhật dữ liệu trong sheet Xe
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A1:B10`,
+      range: `${SHEET_NAME}!A1:B15`,
       valueInputOption: "RAW",
       resource: {
         values: [
@@ -179,8 +189,10 @@ export async function updateCarData(formData: FormData) {
           ["Hạn đăng kiểm", registrationDate],
           ["Hạn bảo hiểm thân vỏ", insuranceDate],
           ["Cập nhật lần cuối", new Date().toISOString()],
-          ["Tổng xăng đã đổ tháng này", "25"],
-          ["Chi phí xăng tháng này", "950000"],
+          ["Km đầu tháng", startKm],
+          ["Km cuối tháng", endKm],
+          ["Xăng đã đổ tháng này", totalFuelMonth],
+          ["Chi phí xăng tháng này", fuelCost],
         ],
       },
     })

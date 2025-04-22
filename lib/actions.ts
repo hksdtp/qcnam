@@ -4,10 +4,14 @@ import { revalidatePath } from "next/cache"
 import { calculateAccountData } from "@/lib/data"
 import { clearTransactionsCache } from "@/app/api/transactions/route"
 import { clearSummaryCache } from "@/app/api/transaction-summary/route"
-import { sheet1ExistsCache, sheet1LastChecked, SHEET1_CACHE_DURATION } from "@/lib/helpers"
+
+// Cache for Sheet1 existence check
+let sheet1ExistsCache = null
+let sheet1LastChecked = 0
+const SHEET1_CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 // Hàm tự động tính toán lại dữ liệu tài khoản cho tháng hiện tại
-export async function autoRecalculateAccountData() {
+async function autoRecalculateAccountData() {
   try {
     const currentDate = new Date()
     const month = currentDate.getMonth() + 1
@@ -39,7 +43,7 @@ export async function autoRecalculateAccountData() {
 }
 
 // Hàm kiểm tra Sheet1 với caching
-export async function checkSheet1Exists() {
+async function checkSheet1Exists() {
   const now = Date.now()
 
   // Return cached result if it's still fresh
@@ -132,22 +136,12 @@ export async function addTransaction(formData: FormData) {
 
     // Chuẩn bị dữ liệu để thêm vào Sheet1
     const timestamp = new Date().toISOString()
-
-    // Xác định loại giao dịch dựa trên category và type
-    let finalType = type
-
-    // Nếu là "Ứng tài khoản" hoặc "Ứng tiền mặt", đảm bảo type là "income"
-    if (category === "Ứng tài khoản" || category === "Ứng tiền mặt" || category === "Hoàn tiền") {
-      finalType = "income"
-      console.log(`Đã xác định loại giao dịch là "income" cho danh mục "${category}"`)
-    }
-
     const rowData = [
       date,
       category,
       description,
       amount.toString(),
-      finalType,
+      type,
       webViewLink || "",
       timestamp,
       subCategory || "",
@@ -179,7 +173,7 @@ export async function addTransaction(formData: FormData) {
         category,
         description,
         amount,
-        type: finalType as "income" | "expense",
+        type: type as "income" | "expense",
         receiptLink: webViewLink,
         timestamp,
         subCategory,
@@ -287,22 +281,13 @@ export async function editTransaction(formData: FormData) {
     const { sheets } = await initGoogleAPIs()
     const SPREADSHEET_ID = await getSpreadsheetId()
 
-    // Xác định loại giao dịch dựa trên category và type
-    let finalType = type
-
-    // Nếu là "Ứng tài khoản" hoặc "Ứng tiền mặt", đảm bảo type là "income"
-    if (category === "Ứng tài khoản" || category === "Ứng tiền mặt" || category === "Hoàn tiền") {
-      finalType = "income"
-      console.log(`Đã xác định loại giao dịch là "income" cho danh mục "${category}"`)
-    }
-
     // Chuẩn bị dữ liệu để cập nhật
     const rowData = [
       date,
       category,
       description,
       amount.toString(),
-      finalType,
+      type,
       "", // Giữ nguyên link hóa đơn
       "", // Giữ nguyên timestamp
       subCategory || "",

@@ -19,10 +19,12 @@ export async function GET() {
       )
     }
 
-    // Add default values for totalFuel and fuelCost if they don't exist
+    // Add default values for new fields if they don't exist
     const carData = {
       ...result.carData,
-      totalFuel: result.carData.totalFuel || 0,
+      startKm: result.carData.startKm || 0,
+      endKm: result.carData.endKm || 0,
+      totalFuelMonth: result.carData.totalFuelMonth || 0,
       fuelCost: result.carData.fuelCost || 0,
     }
 

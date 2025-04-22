@@ -58,14 +58,6 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
 
   const years = Array.from({ length: 10 }, (_, i) => currentDate.getFullYear() - 5 + i)
 
-  // Hàm để đảm bảo giá trị là số hợp lệ
-  const ensureValidNumber = (value: any): number => {
-    if (value === undefined || value === null || isNaN(Number(value))) {
-      return 0
-    }
-    return Number(value)
-  }
-
   // Lấy dữ liệu tài khoản từ sheet Vi khi tháng thay đổi
   const fetchAccountData = async () => {
     setIsLoading(true)
@@ -92,21 +84,9 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
         throw new Error(result.error || "Không thể lấy dữ liệu tài khoản")
       }
 
-      // Đảm bảo tất cả các giá trị là số hợp lệ
-      const validData = {
-        currentBalance: ensureValidNumber(result.data.currentBalance),
-        totalExpense: ensureValidNumber(result.data.totalExpense),
-        beginningBalance: ensureValidNumber(result.data.beginningBalance),
-        totalAdvanced: ensureValidNumber(result.data.totalAdvanced),
-        accountRemaining: ensureValidNumber(result.data.accountRemaining),
-        accountExpenses: ensureValidNumber(result.data.accountExpenses),
-        cashRemaining: ensureValidNumber(result.data.cashRemaining),
-        cashExpenses: ensureValidNumber(result.data.cashExpenses),
-      }
-
-      // Cập nhật state với dữ liệu từ API
-      setAccountData(validData)
-      console.log("Dữ liệu tài khoản:", validData)
+      // Cập nhật state với dữ liệu từ API - CHÚ Ý: Dữ liệu nằm trong result.data, không phải result.accountData
+      setAccountData(result.data)
+      console.log("Dữ liệu tài khoản:", result.data)
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu số dư:", error)
       setError(error.message || "Đã xảy ra lỗi khi lấy dữ liệu")
@@ -222,14 +202,6 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
     return value > 0 ? "text-techcom-blue" : value < 0 ? "text-techcom-red" : "text-techcom-text"
   }
 
-  // Hàm định dạng số tiền an toàn
-  const safeFormatCurrency = (value: number | undefined | null) => {
-    if (value === undefined || value === null || isNaN(value)) {
-      return "0"
-    }
-    return formatCurrency(value)
-  }
-
   return (
     <Card className={cn("overflow-hidden rounded-lg shadow-md", className)}>
       {/* Phần chọn tháng/năm tích hợp */}
@@ -317,33 +289,12 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
               <div className="h-8 w-32 bg-white/20 animate-pulse rounded-md mt-1"></div>
             ) : (
               <p className="text-2xl font-bold mt-1">
-                {accountData ? safeFormatCurrency(accountData.currentBalance) : "0"} ₫
+                {accountData ? formatCurrency(accountData.currentBalance) : "---"} đ
               </p>
             )}
           </div>
-          {/* Thêm nút đồng bộ */}
-          <div>
-            <Button
-              onClick={syncAccountData}
-              disabled={isSyncing}
-              className="h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 p-0 flex items-center justify-center"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`${isSyncing ? "animate-spin" : ""}`}
-              >
-                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-              </svg>
-            </Button>
-          </div>
+          {/* Giữ nguyên bố cục nhưng ẩn nút đồng bộ */}
+          <div className="h-8 w-8"></div>
         </div>
 
         <div
@@ -366,7 +317,7 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
               <div className="h-6 w-24 bg-gray-100 animate-pulse rounded-md mt-1"></div>
             ) : (
               <p className="text-lg font-semibold text-techcom-red">
-                {accountData ? safeFormatCurrency(accountData.totalExpense) : "0"} ₫
+                {accountData ? formatCurrency(accountData.totalExpense) : "---"} đ
               </p>
             )}
           </div>
@@ -385,43 +336,43 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Số dư đầu kỳ</div>
               <div className="font-bold flex items-baseline text-techcom-text">
-                <span>{safeFormatCurrency(accountData.beginningBalance)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
+                <span>{formatCurrency(accountData.beginningBalance)}</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tổng đã ứng tháng này</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.totalAdvanced))}>
-                <span>{safeFormatCurrency(accountData.totalAdvanced)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
+                <span>{formatCurrency(accountData.totalAdvanced)}</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tài khoản còn</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.accountRemaining))}>
-                <span>{safeFormatCurrency(accountData.accountRemaining)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
+                <span>{formatCurrency(accountData.accountRemaining)}</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tài khoản chi</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.accountExpenses, true))}>
-                <span>{safeFormatCurrency(accountData.accountExpenses)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
+                <span>{formatCurrency(accountData.accountExpenses)}</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tiền mặt còn</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.cashRemaining))}>
-                <span>{safeFormatCurrency(accountData.cashRemaining)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
+                <span>{formatCurrency(accountData.cashRemaining)}</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
               </div>
             </div>
             <div className="bg-card-lighter p-3 rounded-lg">
               <div className="text-sm text-techcom-lighttext">Tiền mặt chi</div>
               <div className={cn("font-bold flex items-baseline", getValueColor(accountData.cashExpenses, true))}>
-                <span>{safeFormatCurrency(accountData.cashExpenses)}</span>
-                <span className="text-techcom-lighttext ml-1 text-xs">₫</span>
+                <span>{formatCurrency(accountData.cashExpenses)}</span>
+                <span className="text-techcom-lighttext ml-1 text-xs">đ</span>
               </div>
             </div>
           </div>
