@@ -74,6 +74,10 @@ const SelectContent = React.forwardRef<
         className,
       )}
       position={position}
+      sideOffset={5}
+      alignOffset={0}
+      avoidCollisions={true}
+      collisionPadding={10}
       {...props}
     >
       <SelectScrollUpButton />
@@ -127,7 +131,7 @@ const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
 >(({ className, ...props }, ref) => (
-  <SelectPrimitive.Separator ref={ref} className={cn("-mx-1 my-1 h-px bg-gray-200", className)} {...props} />
+  <SelectPrimitive.Separator ref={ref} className={cn("-mx-1 my-1 h-px bg-muted", className)} {...props} />
 ))
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 

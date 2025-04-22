@@ -103,6 +103,8 @@ export function AddTransactionDialog({
           // Ngăn chặn đóng dialog khi nhấn ESC
           e.preventDefault()
         }}
+        // Add this line to ensure proper stacking context for dropdowns
+        style={{ position: "relative", zIndex: 50 }}
       >
         <DialogHeader className="px-4 py-3 border-b flex flex-row justify-between items-center sticky top-0 bg-white z-10">
           <DialogTitle className="text-lg font-medium">Thêm giao dịch mới</DialogTitle>

@@ -529,7 +529,12 @@ export function TransactionFormFixed({
                   <SelectTrigger className="rounded-lg h-9 bg-white text-xs">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
-                  <SelectContent position="popper" align="start" className="bg-white w-full min-w-[200px]">
+                  <SelectContent
+                    position="popper"
+                    align="center"
+                    side="bottom"
+                    className="bg-white w-full min-w-[200px]"
+                  >
                     {expenseCategories.map((category) => (
                       <SelectItem key={category} value={category} className="cursor-pointer text-xs">
                         {category}
@@ -553,7 +558,12 @@ export function TransactionFormFixed({
                     <SelectTrigger className="rounded-lg h-9 bg-white text-xs">
                       <SelectValue placeholder="Chọn loại chi phí xe" />
                     </SelectTrigger>
-                    <SelectContent position="popper" align="start" className="bg-white w-full min-w-[200px]">
+                    <SelectContent
+                      position="popper"
+                      align="center"
+                      side="bottom"
+                      className="bg-white w-full min-w-[200px]"
+                    >
                       {carSubCategories.map((subCategory) => (
                         <SelectItem key={subCategory.id} value={subCategory.name} className="cursor-pointer text-xs">
                           {subCategory.name}
@@ -593,7 +603,12 @@ export function TransactionFormFixed({
                   <SelectTrigger className="rounded-lg h-9 bg-white text-xs">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
-                  <SelectContent position="popper" align="start" className="bg-white w-full min-w-[200px]">
+                  <SelectContent
+                    position="popper"
+                    align="center"
+                    side="bottom"
+                    className="bg-white w-full min-w-[200px]"
+                  >
                     {incomeCategories.map((category) => (
                       <SelectItem key={category} value={category} className="cursor-pointer text-xs">
                         {category}
@@ -670,7 +685,7 @@ export function TransactionFormFixed({
                 <SelectTrigger className="rounded-lg h-9 bg-white text-xs">
                   <SelectValue placeholder="Chọn phương thức" />
                 </SelectTrigger>
-                <SelectContent position="popper" align="start" className="bg-white w-full min-w-[200px]">
+                <SelectContent position="popper" align="center" side="bottom" className="bg-white w-full min-w-[200px]">
                   {paymentMethods.map((method) => (
                     <SelectItem key={method.id} value={method.id} className="cursor-pointer text-xs">
                       {method.name}
