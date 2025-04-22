@@ -19,10 +19,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn(
-      "fixed inset-0 z-[9990] bg-black/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className,
-    )}
+    className={cn("fixed inset-0 z-[9990] bg-black/80 backdrop-blur-sm", className)}
     {...props}
   />
 ))
@@ -37,16 +34,13 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-0 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
         className,
       )}
       style={{
-        maxHeight: "calc(100vh - 24px)", // Giới hạn chiều cao tối đa
-        maxWidth: "calc(100vw - 24px)", // Giới hạn chiều rộng tối đa
-        width: "100%", // Đảm bảo chiều rộng đầy đủ trên mobile
+        maxHeight: "90vh", // Giới hạn chiều cao tối đa
         overflowY: "auto", // Cho phép cuộn nếu nội dung quá dài
         pointerEvents: "auto", // Đảm bảo có thể click vào dialog
-        touchAction: "pan-y", // Cho phép cuộn trên thiết bị cảm ứng
         WebkitOverflowScrolling: "touch", // Cuộn mượt trên iOS
       }}
       {...props}
@@ -59,14 +53,7 @@ DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        "flex flex-col space-y-1.5 text-center sm:text-left sticky top-0 bg-background z-10 p-4 border-b",
-        className,
-      )}
-      {...props}
-    />
+    <div ref={ref} className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
   ),
 )
 DialogHeader.displayName = "DialogHeader"
@@ -75,10 +62,7 @@ const DialogFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(
-        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 sticky bottom-0 bg-background z-10 p-4 border-t",
-        className,
-      )}
+      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
       {...props}
     />
   ),

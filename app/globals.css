@@ -437,6 +437,45 @@ button:active:not(:disabled) {
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+}
+
+/* Đảm bảo dialog không bị tràn ra ngoài màn hình */
+[role="dialog"] {
+  max-height: 100vh;
+  max-width: 100vw;
+}
+
+/* Đảm bảo dialog luôn hiển thị ở trên cùng và có thể tương tác */
+[role="dialog"] {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+/* Đảm bảo overlay không chặn tương tác với dialog */
+[data-radix-dialog-overlay] {
+  pointer-events: auto !important;
+}
+
+/* Đảm bảo dialog content có thể tương tác */
+[data-radix-dialog-content] {
+  pointer-events: auto !important;
+}
+
+/* Đảm bảo dialog hiển thị đúng trên thiết bị di động */
+@media (max-width: 640px) {
+  [data-radix-popper-content-wrapper] {
+    position: fixed !important;
+    width: auto !important;
+    max-width: calc(100vw - 20px) !important;
+    z-index: 9999 !important;
+  }
+
+  /* Đảm bảo dialog luôn hiển thị ở giữa màn hình */
+  [role="dialog"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     touch-action: pan-y !important;
     -webkit-overflow-scrolling: touch !important;
   }

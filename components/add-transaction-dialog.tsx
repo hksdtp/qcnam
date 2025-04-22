@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { TransactionFormFixed } from "@/components/transaction-form-fixed"
 import { addTransaction } from "@/lib/actions"
@@ -22,33 +22,10 @@ export function AddTransactionDialog({
   initialType?: "expense" | "income"
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [viewportHeight, setViewportHeight] = useState(0)
   const { toast } = useToast()
   const { currentDate } = useDate()
   const month = currentDate.getMonth() + 1
   const year = currentDate.getFullYear()
-
-  // Cập nhật chiều cao viewport khi component mount và khi resize
-  useEffect(() => {
-    const updateViewportHeight = () => {
-      setViewportHeight(window.innerHeight)
-    }
-
-    // Cập nhật ngay khi component mount
-    updateViewportHeight()
-
-    // Thêm event listener cho resize
-    window.addEventListener("resize", updateViewportHeight)
-
-    // Thêm event listener cho thay đổi hướng màn hình (portrait/landscape)
-    window.addEventListener("orientationchange", updateViewportHeight)
-
-    // Cleanup
-    return () => {
-      window.removeEventListener("resize", updateViewportHeight)
-      window.removeEventListener("orientationchange", updateViewportHeight)
-    }
-  }, [])
 
   // Get mutate functions to refresh data after adding a transaction
   const { mutate: mutateTransactions } = useTransactions(month, year)
@@ -117,15 +94,15 @@ export function AddTransactionDialog({
       }}
     >
       <DialogContent
-        className="p-0 overflow-hidden bg-white"
+        className="sm:max-w-[380px] p-0 overflow-hidden bg-white"
         style={{
           position: "fixed",
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          maxHeight: viewportHeight ? `${viewportHeight - 24}px` : "90vh",
-          width: "min(95%, 380px)",
-          borderRadius: "0.5rem",
+          maxHeight: "90vh",
+          width: "95%",
+          zIndex: 50,
         }}
         onInteractOutside={(e) => {
           // Ngăn chặn đóng dialog khi nhấn ra ngoài
@@ -149,13 +126,7 @@ export function AddTransactionDialog({
             <span className="sr-only">Đóng</span>
           </Button>
         </DialogHeader>
-        <div
-          className="overflow-y-auto"
-          style={{
-            maxHeight: viewportHeight ? `${viewportHeight - 80}px` : "calc(90vh - 60px)",
-            WebkitOverflowScrolling: "touch", // Cuộn mượt trên iOS
-          }}
-        >
+        <div className="overflow-y-auto" style={{ maxHeight: "calc(90vh - 60px)" }}>
           <div className="p-4 bg-white">
             <TransactionFormFixed
               onSuccess={() => onOpenChange(false)}

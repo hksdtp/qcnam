@@ -726,14 +726,14 @@ export function TransactionFormFixed({
                 variant="outline"
                 onClick={onCancel}
                 disabled={submitting}
-                className="flex-1 h-12 text-sm font-medium border-gray-300"
+                className="flex-1 h-10 text-sm font-medium border-gray-300"
               >
                 Huỷ
               </Button>
               <Button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 bg-techcom-red hover:bg-techcom-darkred text-white h-12 text-sm font-medium"
+                className="flex-1 bg-techcom-red hover:bg-techcom-darkred text-white h-10 text-sm font-medium"
               >
                 {submitting ? (
                   <>
