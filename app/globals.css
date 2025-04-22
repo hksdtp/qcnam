@@ -401,6 +401,25 @@ button:active:not(:disabled) {
 
 /* Thêm vào cuối file */
 
+/* Đảm bảo dropdown menu hiển thị đúng vị trí */
+[data-radix-popper-content-wrapper] {
+  z-index: 100 !important;
+  width: var(--radix-popper-anchor-width) !important;
+  max-width: 100vw !important;
+  transform: none !important;
+}
+
+/* Đảm bảo dropdown menu không bị tràn ra ngoài màn hình */
+.radix-select-content {
+  width: 100% !important;
+  min-width: var(--radix-select-trigger-width) !important;
+}
+
+/* Đảm bảo dialog luôn hiển thị ở trên cùng */
+[role="dialog"] {
+  z-index: 50 !important;
+}
+
 /* Đảm bảo dialog hiển thị đúng trên thiết bị di động */
 @media (max-width: 640px) {
   [data-radix-popper-content-wrapper] {
