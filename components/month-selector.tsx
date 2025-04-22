@@ -70,7 +70,7 @@ export function MonthSelector() {
               <div className="text-sm text-gray-500">{currentDate.getFullYear()}</div>
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md p-0 rounded-lg overflow-hidden">
+          <DialogContent className="sm:max-w-md p-0 rounded-lg overflow-hidden bg-background">
             <DialogHeader className="p-4 border-b flex justify-between items-center">
               <DialogTitle className="text-xl">Chọn tháng và năm</DialogTitle>
               <button onClick={() => setIsDialogOpen(false)} className="rounded-full p-1 hover:bg-gray-100">
@@ -85,7 +85,7 @@ export function MonthSelector() {
                     value={selectedMonth.toString()}
                     onValueChange={(value) => setSelectedMonth(Number.parseInt(value))}
                   >
-                    <SelectTrigger className="w-full rounded-lg">
+                    <SelectTrigger className="w-full rounded-lg bg-background border border-input">
                       <SelectValue placeholder="Tháng" />
                     </SelectTrigger>
                     <SelectContent>
@@ -103,7 +103,7 @@ export function MonthSelector() {
                     value={selectedYear.toString()}
                     onValueChange={(value) => setSelectedYear(Number.parseInt(value))}
                   >
-                    <SelectTrigger className="w-full rounded-lg">
+                    <SelectTrigger className="w-full rounded-lg bg-background border border-input">
                       <SelectValue placeholder="Năm" />
                     </SelectTrigger>
                     <SelectContent>
