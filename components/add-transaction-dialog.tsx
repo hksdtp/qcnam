@@ -76,43 +76,55 @@ export function AddTransactionDialog({
     }
   }
 
+  const handleCancel = () => {
+    if (!isSubmitting) {
+      onOpenChange(false)
+    }
+  }
+
   return (
     <Dialog
       open={open}
       onOpenChange={(newOpen) => {
-        // Chỉ cho phép đóng dialog khi người dùng nhấn nút X, Cancel hoặc sau khi hoàn thành
+        // Không cho phép đóng dialog khi nhấn ra ngoài
         if (!newOpen && !isSubmitting) {
+          // Chỉ cho phép đóng khi không đang submit
           onOpenChange(newOpen)
         }
       }}
     >
       <DialogContent
-        className="sm:max-w-[350px] max-h-[85vh] p-0 overflow-hidden bg-white"
+        className="sm:max-w-[380px] max-h-[95vh] p-0 overflow-hidden bg-white"
         onInteractOutside={(e) => {
           // Ngăn chặn đóng dialog khi nhấn ra ngoài
           e.preventDefault()
         }}
+        onEscapeKeyDown={(e) => {
+          // Ngăn chặn đóng dialog khi nhấn ESC
+          e.preventDefault()
+        }}
       >
-        <DialogHeader className="px-4 py-2 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+        <DialogHeader className="px-4 py-3 border-b flex justify-between items-center sticky top-0 bg-white z-10">
           <DialogTitle className="text-lg font-medium">Thêm giao dịch mới</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8 rounded-full hover:bg-gray-100"
-            onClick={() => onOpenChange(false)}
+            onClick={handleCancel}
             disabled={isSubmitting}
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Đóng</span>
           </Button>
         </DialogHeader>
-        <div className="overflow-y-auto max-h-[calc(85vh-60px)] overscroll-contain">
-          <div className="p-2 bg-white">
+        <div className="overflow-y-auto max-h-[calc(95vh-60px)] overscroll-contain">
+          <div className="p-4 bg-white">
             <TransactionFormFixed
               onSuccess={() => onOpenChange(false)}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
               initialType={initialType}
+              onCancel={handleCancel}
             />
           </div>
         </div>

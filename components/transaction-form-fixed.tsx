@@ -6,13 +6,14 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, FileType, AlertCircle } from "lucide-react"
+import { Upload, FileType, AlertCircle, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { addTransaction } from "@/lib/actions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { format } from "date-fns"
 import IOSDatePicker from "./ios-date-picker"
 import { amountToWords, generateAmountSuggestions, formatCurrency } from "@/lib/number-to-words"
+import { Button } from "@/components/ui/button"
 
 // Định nghĩa các loại file được phép
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "application/pdf"]
@@ -26,6 +27,7 @@ interface TransactionFormProps {
   initialType?: "expense" | "income"
   onSubmit?: (formData: FormData) => Promise<void>
   isSubmitting?: boolean
+  onCancel?: () => void
 }
 
 // Hàm xác thực file trước khi tải lên
@@ -57,6 +59,7 @@ export function TransactionFormFixed({
   initialType = "expense",
   onSubmit,
   isSubmitting: externalIsSubmitting,
+  onCancel,
 }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<"expense" | "income">(initialType)
@@ -716,14 +719,30 @@ export function TransactionFormFixed({
               )}
             </div>
 
-            <div className="pt-3 sticky bottom-0 bg-white pb-1 mt-2">
-              <button
+            <div className="pt-4 sticky bottom-0 bg-white pb-1 mt-4 flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={submitting}
+                className="flex-1 h-11 text-sm font-medium border-gray-300"
+              >
+                Huỷ
+              </Button>
+              <Button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-techcom-red hover:bg-techcom-darkred text-white rounded-lg h-10 text-sm font-medium"
+                className="flex-1 bg-techcom-red hover:bg-techcom-darkred text-white h-11 text-sm font-medium"
               >
-                {submitting ? "Đang lưu..." : "Lưu"}
-              </button>
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  "Lưu"
+                )}
+              </Button>
             </div>
           </div>
         </form>
