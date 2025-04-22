@@ -37,6 +37,10 @@ const DialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
         className,
       )}
+      style={{
+        maxHeight: "90vh", // Giới hạn chiều cao tối đa
+        overflowY: "auto", // Cho phép cuộn nếu nội dung quá dài
+      }}
       {...props}
     >
       {children}

@@ -94,7 +94,16 @@ export function AddTransactionDialog({
       }}
     >
       <DialogContent
-        className="sm:max-w-[380px] max-h-[95vh] p-0 overflow-hidden bg-white"
+        className="sm:max-w-[380px] p-0 overflow-hidden bg-white"
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          maxHeight: "90vh",
+          width: "95%",
+          zIndex: 50,
+        }}
         onInteractOutside={(e) => {
           // Ngăn chặn đóng dialog khi nhấn ra ngoài
           e.preventDefault()
@@ -103,8 +112,6 @@ export function AddTransactionDialog({
           // Ngăn chặn đóng dialog khi nhấn ESC
           e.preventDefault()
         }}
-        // Add this line to ensure proper stacking context for dropdowns
-        style={{ position: "relative", zIndex: 50 }}
       >
         <DialogHeader className="px-4 py-3 border-b flex flex-row justify-between items-center sticky top-0 bg-white z-10">
           <DialogTitle className="text-lg font-medium">Thêm giao dịch mới</DialogTitle>
@@ -119,7 +126,7 @@ export function AddTransactionDialog({
             <span className="sr-only">Đóng</span>
           </Button>
         </DialogHeader>
-        <div className="overflow-y-auto max-h-[calc(95vh-60px)] overscroll-contain">
+        <div className="overflow-y-auto" style={{ maxHeight: "calc(90vh - 60px)" }}>
           <div className="p-4 bg-white">
             <TransactionFormFixed
               onSuccess={() => onOpenChange(false)}
