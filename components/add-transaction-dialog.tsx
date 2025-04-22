@@ -87,7 +87,7 @@ export function AddTransactionDialog({
       }}
     >
       <DialogContent
-        className="sm:max-w-[425px] p-0 overflow-hidden bg-white"
+        className="sm:max-w-[350px] max-h-[90vh] p-0 overflow-hidden bg-white"
         onInteractOutside={(e) => {
           // Ngăn chặn đóng dialog khi nhấn ra ngoài
           e.preventDefault()
@@ -106,13 +106,15 @@ export function AddTransactionDialog({
             <span className="sr-only">Đóng</span>
           </Button>
         </DialogHeader>
-        <div className="p-4 bg-white">
-          <TransactionFormFixed
-            onSuccess={() => onOpenChange(false)}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            initialType={initialType}
-          />
+        <div className="overflow-y-auto max-h-[calc(90vh-60px)]">
+          <div className="p-2 bg-white">
+            <TransactionFormFixed
+              onSuccess={() => onOpenChange(false)}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+              initialType={initialType}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

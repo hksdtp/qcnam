@@ -3,11 +3,10 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Upload, FileType, AlertCircle } from "lucide-react"
+import { Upload, FileType, AlertCircle } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { addTransaction } from "@/lib/actions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -479,33 +478,33 @@ export function TransactionFormFixed({
   const submitting = externalIsSubmitting !== undefined ? externalIsSubmitting : isSubmitting
 
   return (
-    <div className="p-4">
+    <div className="p-2">
       <Tabs defaultValue={activeTab} onValueChange={(value) => handleTabChange(value as "expense" | "income")}>
-        <TabsList className="w-full grid grid-cols-2 mb-4">
+        <TabsList className="w-full grid grid-cols-2 mb-3">
           <TabsTrigger
             value="expense"
-            className="py-2 bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-l-lg"
+            className="py-1.5 text-xs bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-l-lg"
           >
             Chi
           </TabsTrigger>
           <TabsTrigger
             value="income"
-            className="py-2 bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-r-lg"
+            className="py-1.5 text-xs bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-r-lg"
           >
             Thu
           </TabsTrigger>
         </TabsList>
 
         {error && (
-          <Alert variant="destructive" className="mb-4 py-2">
-            <AlertCircle className="h-4 w-4" />
+          <Alert variant="destructive" className="mb-3 py-1.5">
+            <AlertCircle className="h-3 w-3" />
             <AlertDescription className="text-xs">{error}</AlertDescription>
           </Alert>
         )}
 
         {validationErrors.length > 0 && (
-          <Alert variant="destructive" className="mb-4 py-2">
-            <AlertCircle className="h-4 w-4" />
+          <Alert variant="destructive" className="mb-3 py-1.5">
+            <AlertCircle className="h-3 w-3" />
             <AlertDescription>
               <ul className="list-disc pl-4 space-y-0.5 text-xs">
                 {validationErrors.map((err, index) => (
@@ -516,20 +515,20 @@ export function TransactionFormFixed({
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form id="transaction-form" onSubmit={handleSubmit}>
+          <div className="space-y-3">
             <TabsContent value="expense" className="mt-0 pt-0">
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium flex items-center">
                   Danh mục <span className="text-red-500 ml-1">*</span>
                 </label>
                 <Select value={formData.category} onValueChange={(value) => handleChange("category", value)} required>
-                  <SelectTrigger className="rounded-lg h-10 bg-white">
+                  <SelectTrigger className="rounded-lg h-9 bg-white text-xs">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     {expenseCategories.map((category) => (
-                      <SelectItem key={category} value={category} className="cursor-pointer">
+                      <SelectItem key={category} value={category} className="cursor-pointer text-xs">
                         {category}
                       </SelectItem>
                     ))}
@@ -539,8 +538,8 @@ export function TransactionFormFixed({
 
               {/* Hiển thị danh mục con cho chi phí xe ô tô */}
               {showCarSubcategories && (
-                <div className="space-y-2 mt-4">
-                  <label className="text-sm font-medium flex items-center">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium flex items-center">
                     Loại chi phí xe <span className="text-red-500 ml-1">*</span>
                   </label>
                   <Select
@@ -548,12 +547,12 @@ export function TransactionFormFixed({
                     onValueChange={(value) => handleChange("subCategory", value)}
                     required
                   >
-                    <SelectTrigger className="rounded-lg h-10 bg-white">
+                    <SelectTrigger className="rounded-lg h-9 bg-white text-xs">
                       <SelectValue placeholder="Chọn loại chi phí xe" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px] overflow-y-auto bg-white">
+                    <SelectContent className="bg-white">
                       {carSubCategories.map((subCategory) => (
-                        <SelectItem key={subCategory.id} value={subCategory.name} className="cursor-pointer">
+                        <SelectItem key={subCategory.id} value={subCategory.name} className="cursor-pointer text-xs">
                           {subCategory.name}
                         </SelectItem>
                       ))}
@@ -561,8 +560,8 @@ export function TransactionFormFixed({
                   </Select>
                   {/* Thêm trường nhập số lít xăng khi chọn Xăng */}
                   {formData.subCategory === "Xăng" && (
-                    <div className="space-y-2 mt-4">
-                      <label className="text-sm font-medium flex items-center">Số lít xăng</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium flex items-center">Số lít xăng</label>
                       <div className="relative">
                         <Input
                           type="number"
@@ -570,9 +569,9 @@ export function TransactionFormFixed({
                           placeholder="0.00"
                           value={formData.fuelLiters}
                           onChange={(e) => handleChange("fuelLiters", e.target.value)}
-                          className="pr-16 rounded-lg h-10"
+                          className="pr-12 rounded-lg h-9 text-xs"
                         />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500 text-xs">
                           Lít
                         </div>
                       </div>
@@ -583,17 +582,17 @@ export function TransactionFormFixed({
             </TabsContent>
 
             <TabsContent value="income" className="mt-0 pt-0">
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium flex items-center">
                   Danh mục <span className="text-red-500 ml-1">*</span>
                 </label>
                 <Select value={formData.category} onValueChange={(value) => handleChange("category", value)} required>
-                  <SelectTrigger className="rounded-lg h-10 bg-white">
+                  <SelectTrigger className="rounded-lg h-9 bg-white text-xs">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     {incomeCategories.map((category) => (
-                      <SelectItem key={category} value={category} className="cursor-pointer">
+                      <SelectItem key={category} value={category} className="cursor-pointer text-xs">
                         {category}
                       </SelectItem>
                     ))}
@@ -602,8 +601,8 @@ export function TransactionFormFixed({
               </div>
             </TabsContent>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center">
                 Mô tả <span className="text-red-500 ml-1">*</span>
               </label>
               <Input
@@ -611,12 +610,12 @@ export function TransactionFormFixed({
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
                 required
-                className="rounded-lg h-10"
+                className="rounded-lg h-9 text-xs"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center">
                 Số tiền <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
@@ -626,38 +625,38 @@ export function TransactionFormFixed({
                   value={formData.amount}
                   onChange={(e) => handleChange("amount", e.target.value)}
                   required
-                  className="pr-16 rounded-lg h-10"
+                  className="pr-12 rounded-lg h-9 text-xs"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500 text-xs">
                   VND
                 </div>
               </div>
 
               {/* Hiển thị số tiền đã định dạng */}
-              {displayAmount && <div className="text-sm text-gray-600 mt-1">{displayAmount} đ</div>}
+              {displayAmount && <div className="text-xs text-gray-600 mt-1">{displayAmount} ₫</div>}
 
               {/* Hiển thị số tiền bằng chữ */}
               {amountInWords && <div className="text-xs text-gray-600 italic mt-1">{amountInWords}</div>}
 
               {/* Hiển thị các mẫu tiền gợi ý */}
               {amountSuggestions.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-1 mt-1">
                   {amountSuggestions.map((amount, index) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => handleSelectAmountSuggestion(amount)}
-                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs"
+                      className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs"
                     >
-                      {formatCurrency(amount)} đ
+                      {formatCurrency(amount)} ₫
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center">
                 Phương thức thanh toán <span className="text-red-500 ml-1">*</span>
               </label>
               <Select
@@ -665,12 +664,12 @@ export function TransactionFormFixed({
                 onValueChange={(value) => handleChange("paymentMethod", value)}
                 required
               >
-                <SelectTrigger className="rounded-lg h-10 bg-white">
+                <SelectTrigger className="rounded-lg h-9 bg-white text-xs">
                   <SelectValue placeholder="Chọn phương thức" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
                   {paymentMethods.map((method) => (
-                    <SelectItem key={method.id} value={method.id} className="cursor-pointer">
+                    <SelectItem key={method.id} value={method.id} className="cursor-pointer text-xs">
                       {method.name}
                     </SelectItem>
                   ))}
@@ -678,16 +677,16 @@ export function TransactionFormFixed({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center">
                 Ngày <span className="text-red-500 ml-1">*</span>
               </label>
               <IOSDatePicker onDateSelect={handleDateChange} initialDate={selectedDate} onClose={() => {}} />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Hình ảnh (hóa đơn, biên lai...)</label>
-              <div className="border border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Hình ảnh (hóa đơn, biên lai...)</label>
+              <div className="border border-dashed border-gray-300 rounded-lg p-2 flex flex-col items-center justify-center">
                 <input
                   type="file"
                   id="receipt"
@@ -696,42 +695,35 @@ export function TransactionFormFixed({
                   onChange={handleFileChange}
                 />
                 <label htmlFor="receipt" className="cursor-pointer flex flex-col items-center">
-                  <Upload className="h-5 w-5 text-gray-400 mb-2" />
+                  <Upload className="h-4 w-4 text-gray-400 mb-1" />
                   <p className="text-xs text-gray-500 text-center">Bấm để tải lên hoặc kéo thả file</p>
-                  <p className="text-xs text-gray-400 mt-1">Hỗ trợ: JPEG, PNG, PDF (tối đa 5MB)</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Hỗ trợ: JPEG, PNG, PDF (tối đa 5MB)</p>
                 </label>
               </div>
               {selectedFile && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-2">
-                    <FileType className="h-4 w-4 text-gray-500" />
+                <div className="mt-1">
+                  <div className="flex items-center gap-1">
+                    <FileType className="h-3 w-3 text-gray-500" />
                     <p className="text-xs text-gray-600 font-medium truncate">{selectedFile.name}</p>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">{uploadStatus}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{uploadStatus}</p>
                   {uploadProgress > 0 && (
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                      <div className="bg-techcom-red h-1.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                    <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                      <div className="bg-techcom-red h-1 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            <div className="pt-4">
-              <Button
+            <div className="pt-2">
+              <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-techcom-red hover:bg-techcom-darkred text-white rounded-lg h-10 text-sm"
+                className="w-full bg-techcom-red hover:bg-techcom-darkred text-white rounded-lg h-9 text-xs font-medium"
               >
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    Đang lưu...
-                  </>
-                ) : (
-                  "Lưu"
-                )}
-              </Button>
+                {submitting ? "Đang lưu..." : "Lưu"}
+              </button>
             </div>
           </div>
         </form>
