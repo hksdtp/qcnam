@@ -104,7 +104,7 @@ export function AddTransactionDialog({
           e.preventDefault()
         }}
       >
-        <DialogHeader className="px-4 py-3 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+        <DialogHeader className="px-4 py-3 border-b flex flex-row justify-between items-center sticky top-0 bg-white z-10">
           <DialogTitle className="text-lg font-medium">Thêm giao dịch mới</DialogTitle>
           <Button
             variant="ghost"
