@@ -1,14 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
 import { TransactionFormFixed } from "@/components/transaction-form-fixed"
 import { addTransaction } from "@/lib/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { useTransactions, useAccountData, useCarData, useTransactionSummary } from "@/lib/hooks"
 import { useDate } from "@/lib/date-context"
 import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 export function AddTransactionDialog({
   open,
@@ -94,7 +93,7 @@ export function AddTransactionDialog({
       }}
     >
       <DialogContent
-        className="sm:max-w-[380px] p-0 overflow-hidden bg-white"
+        className="w-full max-w-md mx-auto overflow-y-auto"
         style={{
           position: "fixed",
           top: "50%",
@@ -115,16 +114,10 @@ export function AddTransactionDialog({
       >
         <DialogHeader className="px-4 py-3 border-b flex flex-row justify-between items-center sticky top-0 bg-white z-10">
           <DialogTitle className="text-lg font-medium">Thêm giao dịch mới</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full hover:bg-gray-100"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-          >
+          <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
             <X className="h-4 w-4" />
-            <span className="sr-only">Đóng</span>
-          </Button>
+            <span className="sr-only">Close</span>
+          </DialogClose>
         </DialogHeader>
         <div className="overflow-y-auto" style={{ maxHeight: "calc(90vh - 60px)" }}>
           <div className="p-4 bg-white">
