@@ -478,7 +478,7 @@ export function TransactionFormFixed({
   const submitting = externalIsSubmitting !== undefined ? externalIsSubmitting : isSubmitting
 
   return (
-    <div className="p-2">
+    <div className="p-2 pb-4">
       <Tabs defaultValue={activeTab} onValueChange={(value) => handleTabChange(value as "expense" | "income")}>
         <TabsList className="w-full grid grid-cols-2 mb-3">
           <TabsTrigger
@@ -640,13 +640,13 @@ export function TransactionFormFixed({
 
               {/* Hiển thị các mẫu tiền gợi ý */}
               {amountSuggestions.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="flex flex-wrap gap-1 mt-1 mb-2 max-h-[60px] overflow-y-auto">
                   {amountSuggestions.map((amount, index) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => handleSelectAmountSuggestion(amount)}
-                      className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs"
+                      className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs flex-shrink-0"
                     >
                       {formatCurrency(amount)} ₫
                     </button>
@@ -716,11 +716,11 @@ export function TransactionFormFixed({
               )}
             </div>
 
-            <div className="pt-2">
+            <div className="pt-3 sticky bottom-0 bg-white pb-1 mt-2">
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-techcom-red hover:bg-techcom-darkred text-white rounded-lg h-9 text-xs font-medium"
+                className="w-full bg-techcom-red hover:bg-techcom-darkred text-white rounded-lg h-10 text-sm font-medium"
               >
                 {submitting ? "Đang lưu..." : "Lưu"}
               </button>
