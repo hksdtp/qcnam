@@ -480,19 +480,20 @@ export function TransactionFormFixed({
   // Use external isSubmitting if provided
   const submitting = externalIsSubmitting !== undefined ? externalIsSubmitting : isSubmitting
 
+  // Cập nhật phần cuối của component để tối ưu hóa cho thiết bị di động
   return (
-    <div className="p-2 pb-4">
+    <div className="p-2 pb-4 dialog-scrollable">
       <Tabs defaultValue={activeTab} onValueChange={(value) => handleTabChange(value as "expense" | "income")}>
         <TabsList className="w-full grid grid-cols-2 mb-3">
           <TabsTrigger
             value="expense"
-            className="py-1.5 text-xs bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-l-lg"
+            className="py-1.5 text-xs bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-l-lg min-h-[44px]"
           >
             Chi
           </TabsTrigger>
           <TabsTrigger
             value="income"
-            className="py-1.5 text-xs bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-r-lg"
+            className="py-1.5 text-xs bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-r-lg min-h-[44px]"
           >
             Thu
           </TabsTrigger>
@@ -725,14 +726,14 @@ export function TransactionFormFixed({
                 variant="outline"
                 onClick={onCancel}
                 disabled={submitting}
-                className="flex-1 h-10 text-sm font-medium border-gray-300"
+                className="flex-1 h-12 text-sm font-medium border-gray-300"
               >
                 Huỷ
               </Button>
               <Button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 bg-techcom-red hover:bg-techcom-darkred text-white h-10 text-sm font-medium"
+                className="flex-1 bg-techcom-red hover:bg-techcom-darkred text-white h-12 text-sm font-medium"
               >
                 {submitting ? (
                   <>

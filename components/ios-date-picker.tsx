@@ -245,35 +245,22 @@ const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }) => {
     )
   }
 
+  const formattedDate = format(currentDate, "dd/MM/yyyy")
+
+  const handleClick = () => {
+    openDatePicker()
+  }
+
   return (
     <div className="relative">
-      {/* Date Input Field */}
-      <div className="relative">
-        <input
-          type="text"
-          value={format(currentDate, "dd/MM/yyyy")}
-          readOnly
-          className="w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer"
-          onClick={openDatePicker}
-        />
-        <div className="absolute right-2 top-2 text-gray-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-        </div>
-      </div>
-
+      <input
+        type="text"
+        value={formattedDate}
+        readOnly
+        onClick={handleClick}
+        className="w-full rounded-lg h-11 bg-white text-xs border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+        style={{ fontSize: "16px" }} // Ngăn iOS zoom vào input
+      />
       {/* Modal Backdrop with Enhanced Blur Effect */}
       {showDatePicker && (
         <div className="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-md z-40 flex items-center justify-center transition-all duration-500">
