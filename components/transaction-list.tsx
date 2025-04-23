@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { EditIcon, TrashIcon } from "lucide-react"
+import { EditIcon, TrashIcon, MoreHorizontal, EyeIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DirectReceiptViewer } from "@/components/direct-receipt-viewer"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { deleteTransaction } from "@/lib/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { TransactionDetailDialog } from "./transaction-detail-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 export function TransactionList({
   category = "all",
@@ -31,13 +32,6 @@ export function TransactionList({
   const [viewingTransaction, setViewingTransaction] = useState<any>(null)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
   const { toast } = useToast()
-
-  // Debug log to verify transactions are loaded
-  useEffect(() => {
-    if (transactions.length > 0) {
-      console.log("Transactions loaded:", transactions.length)
-    }
-  }, [transactions])
 
   // Filter transactions based on props
   const filteredTransactions = transactions
@@ -150,32 +144,38 @@ export function TransactionList({
               {filteredTransactions.map((transaction) => (
                 <div
                   key={transaction.id || `${transaction.date}-${transaction.amount}-${Math.random()}`}
-                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 hover:bg-gray-50 rounded-md p-2 -mx-2 transition-colors cursor-pointer"
-                  onClick={() => handleViewDetail(transaction)}
-                  data-testid="transaction-item"
+                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 relative"
                 >
-                  <div className="space-y-1 flex-1">
-                    <p className="font-medium">{transaction.description}</p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm text-muted-foreground">{transaction.date}</span>
-                      <Badge variant="outline">{transaction.category}</Badge>
-                      {transaction.subCategory && (
-                        <Badge variant="outline" className="bg-blue-50">
-                          {transaction.subCategory}
-                        </Badge>
-                      )}
-                      {transaction.paymentMethod && (
-                        <Badge variant="outline" className="bg-gray-50">
-                          {transaction.paymentMethod === "cash" ? "Tiền mặt" : "Chuyển khoản"}
-                        </Badge>
-                      )}
-                      {transaction.receiptLink && (
-                        <span onClick={(e) => e.stopPropagation()}>
-                          <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
-                        </span>
-                      )}
+                  {/* Vùng có thể click để xem chi tiết */}
+                  <div
+                    className="flex-1 pr-16 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+                    onClick={() => handleViewDetail(transaction)}
+                  >
+                    <div className="space-y-1">
+                      <p className="font-medium">{transaction.description}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-muted-foreground">{transaction.date}</span>
+                        <Badge variant="outline">{transaction.category}</Badge>
+                        {transaction.subCategory && (
+                          <Badge variant="outline" className="bg-blue-50">
+                            {transaction.subCategory}
+                          </Badge>
+                        )}
+                        {transaction.paymentMethod && (
+                          <Badge variant="outline" className="bg-gray-50">
+                            {transaction.paymentMethod === "cash" ? "Tiền mặt" : "Chuyển khoản"}
+                          </Badge>
+                        )}
+                        {transaction.receiptLink && (
+                          <span onClick={(e) => e.stopPropagation()}>
+                            <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Phần hiển thị số tiền */}
                   <div className="flex items-center gap-3">
                     <span
                       className={cn(
@@ -192,35 +192,40 @@ export function TransactionList({
                         maximumFractionDigits: 0,
                       }).format(transaction.amount)}
                     </span>
-                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleEdit(transaction)
-                        }}
-                        data-testid="edit-button"
-                      >
-                        <EditIcon className="h-4 w-4" />
-                        <span className="sr-only">Edit</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleDelete(transaction)
-                        }}
-                        data-testid="delete-button"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
+
+                    {/* Thay thế các nút bằng dropdown menu */}
+                    <div className="z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full p-0 hover:bg-gray-100">
+                            <MoreHorizontal className="h-5 w-5" />
+                            <span className="sr-only">Tùy chọn</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[160px] p-2">
+                          <DropdownMenuItem
+                            className="cursor-pointer flex items-center h-9 px-2 py-1.5 text-sm rounded-md hover:bg-gray-100"
+                            onClick={() => handleViewDetail(transaction)}
+                          >
+                            <EyeIcon className="mr-2 h-4 w-4" />
+                            <span>Chi tiết</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="cursor-pointer flex items-center h-9 px-2 py-1.5 text-sm rounded-md hover:bg-gray-100"
+                            onClick={() => handleEdit(transaction)}
+                          >
+                            <EditIcon className="mr-2 h-4 w-4" />
+                            <span>Chỉnh sửa</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="cursor-pointer flex items-center h-9 px-2 py-1.5 text-sm rounded-md text-red-600 hover:bg-red-50"
+                            onClick={() => handleDelete(transaction)}
+                          >
+                            <TrashIcon className="mr-2 h-4 w-4" />
+                            <span>Xóa</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>
