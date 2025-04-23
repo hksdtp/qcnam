@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EditIcon, TrashIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { DirectReceiptViewer } from "@/components/direct-receipt-viewer"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
+import { DeleteTransactionDialog } from "@/components/delete-transaction-dialog"
+import { TransactionDetailDialog } from "@/components/transaction-detail-dialog"
 import { useDate } from "@/lib/date-context"
 import { useTransactions } from "@/lib/hooks"
 import { Skeleton } from "@/components/ui/skeleton"
-import { deleteTransaction } from "@/lib/actions"
-import { useToast } from "@/components/ui/use-toast"
 
 export function TransactionList({
   category = "all",
@@ -26,8 +26,10 @@ export function TransactionList({
   const year = currentDate.getFullYear()
 
   const { transactions, isLoading, mutate } = useTransactions(month, year)
-  const [editingTransaction, setEditingTransaction] = useState<any>(null)
-  const { toast } = useToast()
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null)
+  const [showDetailDialog, setShowDetailDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // Filter transactions based on props
   const filteredTransactions = transactions
@@ -48,46 +50,27 @@ export function TransactionList({
       return dateB.getTime() - dateA.getTime()
     })
 
+  const handleViewDetail = (transaction: any) => {
+    console.log("Viewing transaction details:", transaction)
+    setSelectedTransaction(transaction)
+    setShowDetailDialog(true)
+  }
+
   const handleEdit = (transaction: any) => {
-    setEditingTransaction(transaction)
+    console.log("Editing transaction:", transaction)
+    setSelectedTransaction(transaction)
+    setShowEditDialog(true)
   }
 
-  const handleDelete = async (transaction: any) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return
-
-    const formData = new FormData()
-    formData.append("rowIndex", transaction.rowIndex.toString())
-
-    try {
-      const result = await deleteTransaction(formData)
-
-      if (result.success) {
-        toast({
-          title: "Xóa giao dịch thành công",
-          description: "Giao dịch đã được xóa khỏi hệ thống",
-        })
-
-        // Refresh data
-        mutate()
-      } else {
-        toast({
-          title: "Lỗi khi xóa giao dịch",
-          description: result.error || "Đã xảy ra lỗi không xác định",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "Lỗi khi xóa giao dịch",
-        description: error.message || "Đã xảy ra lỗi không xác định",
-        variant: "destructive",
-      })
-    }
+  const handleDelete = (transaction: any) => {
+    console.log("Deleting transaction:", transaction)
+    setSelectedTransaction(transaction)
+    setShowDeleteDialog(true)
   }
 
-  const handleEditComplete = () => {
-    setEditingTransaction(null)
-    // Refresh data
+  const handleSuccess = () => {
+    console.log("Transaction operation successful, refreshing data")
+    // Refresh data with force revalidation
     mutate()
   }
 
@@ -129,8 +112,9 @@ export function TransactionList({
             <div className="space-y-4">
               {filteredTransactions.map((transaction) => (
                 <div
-                  key={transaction.id}
-                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                  key={transaction.id || `${transaction.date}-${transaction.amount}-${Math.random()}`}
+                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 rounded-md p-2 -mx-2"
+                  onClick={() => handleViewDetail(transaction)}
                 >
                   <div className="space-y-1">
                     <p className="font-medium">{transaction.description}</p>
@@ -148,7 +132,9 @@ export function TransactionList({
                         </Badge>
                       )}
                       {transaction.receiptLink && (
-                        <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                        </span>
                       )}
                     </div>
                   </div>
@@ -162,14 +148,19 @@ export function TransactionList({
                       )}
                     >
                       {transaction.type === "income" ? "+" : "-"}
-                      {new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                        maximumFractionDigits: 0,
-                      }).format(transaction.amount)}
+                      {formatCurrency(transaction.amount)}
                     </span>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(transaction)}>
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleEdit(transaction)
+                        }}
+                      >
                         <EditIcon className="h-4 w-4" />
                         <span className="sr-only">Edit</span>
                       </Button>
@@ -177,7 +168,11 @@ export function TransactionList({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => handleDelete(transaction)}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleDelete(transaction)
+                        }}
                       >
                         <TrashIcon className="h-4 w-4" />
                         <span className="sr-only">Delete</span>
@@ -191,12 +186,37 @@ export function TransactionList({
         </CardContent>
       </Card>
 
-      {editingTransaction && (
+      {selectedTransaction && showDetailDialog && (
+        <TransactionDetailDialog
+          transaction={selectedTransaction}
+          open={showDetailDialog}
+          onOpenChange={setShowDetailDialog}
+          onEdit={(transaction) => {
+            setShowDetailDialog(false)
+            setTimeout(() => handleEdit(transaction), 100)
+          }}
+          onDelete={(transaction) => {
+            setShowDetailDialog(false)
+            setTimeout(() => handleDelete(transaction), 100)
+          }}
+        />
+      )}
+
+      {selectedTransaction && showEditDialog && (
         <EditTransactionDialog
-          transaction={editingTransaction}
-          open={!!editingTransaction}
-          onOpenChange={() => setEditingTransaction(null)}
-          onComplete={handleEditComplete}
+          transaction={selectedTransaction}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSuccess={handleSuccess}
+        />
+      )}
+
+      {selectedTransaction && showDeleteDialog && (
+        <DeleteTransactionDialog
+          transaction={selectedTransaction}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onSuccess={handleSuccess}
         />
       )}
     </>
