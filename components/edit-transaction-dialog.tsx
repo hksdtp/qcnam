@@ -1,31 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { TransactionFormFixed } from "@/components/transaction-form-fixed"
+import { Button } from "@/components/ui/button"
+import { X } from "lucide-react"
 import { editTransaction } from "@/lib/actions"
 import { useToast } from "@/components/ui/use-toast"
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { TransactionForm } from "./transaction-form"
 
 interface EditTransactionDialogProps {
+  transaction: any
   open: boolean
   onOpenChange: (open: boolean) => void
-  transaction: any // Replace 'any' with a more specific type if available
   onSuccess?: () => void
 }
 
-export function EditTransactionDialog({ open, onOpenChange, transaction, onSuccess }: EditTransactionDialogProps) {
+export function EditTransactionDialog({ transaction, open, onOpenChange, onSuccess }: EditTransactionDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
-  // Debugging
-  useEffect(() => {
-    console.log("EditTransactionDialog rendered with open:", open, "transaction:", transaction)
-  }, [open, transaction])
+  if (!transaction) return null
 
   const handleSubmit = async (formData: FormData) => {
-    console.log("Submitting edit form")
     setIsSubmitting(true)
 
     try {
@@ -75,8 +71,15 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, onSucce
     }
   }
 
-  // Nếu không có transaction, không hiển thị dialog
-  if (!transaction) return null
+  // Parse date string to Date object
+  const dateObj = (() => {
+    try {
+      const [day, month, year] = transaction.date.split("/").map(Number)
+      return new Date(year, month - 1, day)
+    } catch (e) {
+      return new Date()
+    }
+  })()
 
   return (
     <Dialog
@@ -88,18 +91,7 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, onSucce
         }
       }}
     >
-      <DialogContent
-        className="sm:max-w-[380px] p-0 overflow-hidden bg-white"
-        style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          maxHeight: "90vh",
-          width: "95%",
-          zIndex: 50,
-        }}
-      >
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
         <DialogHeader className="px-4 py-3 border-b flex flex-row justify-between items-center sticky top-0 bg-white z-10">
           <DialogTitle className="text-lg font-medium">Chỉnh sửa giao dịch</DialogTitle>
           <Button
@@ -113,25 +105,22 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, onSucce
             <span className="sr-only">Đóng</span>
           </Button>
         </DialogHeader>
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(90vh - 60px)" }}>
-          <div className="p-4 bg-white">
-            <TransactionFormFixed
-              initialType={transaction.type}
-              initialValues={{
-                date: transaction.date,
-                category: transaction.category,
-                description: transaction.description,
-                amount: transaction.amount.toString(),
-                subCategory: transaction.subCategory || "",
-                fuelLiters: transaction.fuelLiters || "",
-                paymentMethod: transaction.paymentMethod || "transfer",
-              }}
-              onSuccess={onSuccess}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              onCancel={handleCancel}
-            />
-          </div>
+        <div className="p-4">
+          <TransactionForm
+            initialType={transaction.type}
+            initialValues={{
+              date: dateObj,
+              category: transaction.category,
+              description: transaction.description,
+              amount: transaction.amount.toString(),
+              subCategory: transaction.subCategory || "",
+              fuelLiters: transaction.fuelLiters || "",
+              paymentMethod: transaction.paymentMethod || "transfer",
+            }}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            onCancel={handleCancel}
+          />
         </div>
       </DialogContent>
     </Dialog>

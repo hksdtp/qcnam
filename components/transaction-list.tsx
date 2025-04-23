@@ -8,11 +8,11 @@ import { EditIcon, TrashIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DirectReceiptViewer } from "@/components/direct-receipt-viewer"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
+import { DeleteTransactionDialog } from "@/components/delete-transaction-dialog"
+import { TransactionDetailDialog } from "@/components/transaction-detail-dialog"
 import { useDate } from "@/lib/date-context"
 import { useTransactions } from "@/lib/hooks"
 import { Skeleton } from "@/components/ui/skeleton"
-import { deleteTransaction } from "@/lib/actions"
-import { useToast } from "@/components/ui/use-toast"
 
 export function TransactionList({
   category = "all",
@@ -26,8 +26,10 @@ export function TransactionList({
   const year = currentDate.getFullYear()
 
   const { transactions, isLoading, mutate } = useTransactions(month, year)
-  const [editingTransaction, setEditingTransaction] = useState<any>(null)
-  const { toast } = useToast()
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null)
+  const [showDetailDialog, setShowDetailDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // Filter transactions based on props
   const filteredTransactions = transactions
@@ -48,49 +50,26 @@ export function TransactionList({
       return dateB.getTime() - dateA.getTime()
     })
 
+  const handleViewDetail = (transaction: any) => {
+    console.log("Viewing transaction details:", transaction)
+    setSelectedTransaction(transaction)
+    setShowDetailDialog(true)
+  }
+
   const handleEdit = (transaction: any) => {
     console.log("Editing transaction:", transaction)
-    setEditingTransaction(transaction)
+    setSelectedTransaction(transaction)
+    setShowEditDialog(true)
   }
 
-  const handleDelete = async (transaction: any) => {
+  const handleDelete = (transaction: any) => {
     console.log("Deleting transaction:", transaction)
-
-    if (!window.confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return
-
-    const formData = new FormData()
-    formData.append("rowIndex", transaction.rowIndex.toString())
-
-    try {
-      const result = await deleteTransaction(formData)
-
-      if (result.success) {
-        toast({
-          title: "Xóa giao dịch thành công",
-          description: "Giao dịch đã được xóa khỏi hệ thống",
-        })
-
-        // Refresh data with force revalidation
-        mutate(undefined, { revalidate: true })
-      } else {
-        toast({
-          title: "Lỗi khi xóa giao dịch",
-          description: result.error || "Đã xảy ra lỗi không xác định",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Error deleting transaction:", error)
-      toast({
-        title: "Lỗi khi xóa giao dịch",
-        description: error.message || "Đã xảy ra lỗi không xác định",
-        variant: "destructive",
-      })
-    }
+    setSelectedTransaction(transaction)
+    setShowDeleteDialog(true)
   }
 
-  const handleEditComplete = () => {
-    setEditingTransaction(null)
+  const handleSuccess = () => {
+    console.log("Transaction operation successful, refreshing data")
     // Refresh data with force revalidation
     mutate(undefined, { revalidate: true })
   }
@@ -135,6 +114,8 @@ export function TransactionList({
                 <div
                   key={transaction.id || `${transaction.date}-${transaction.amount}-${Math.random()}`}
                   className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                  onClick={() => handleViewDetail(transaction)}
+                  style={{ cursor: "pointer" }}
                 >
                   <div className="space-y-1">
                     <p className="font-medium">{transaction.description}</p>
@@ -152,7 +133,9 @@ export function TransactionList({
                         </Badge>
                       )}
                       {transaction.receiptLink && (
-                        <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                        </span>
                       )}
                     </div>
                   </div>
@@ -172,7 +155,7 @@ export function TransactionList({
                         maximumFractionDigits: 0,
                       }).format(transaction.amount)}
                     </span>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -208,14 +191,32 @@ export function TransactionList({
         </CardContent>
       </Card>
 
-      {editingTransaction && (
+      {selectedTransaction && showDetailDialog && (
+        <TransactionDetailDialog
+          transaction={selectedTransaction}
+          open={showDetailDialog}
+          onOpenChange={setShowDetailDialog}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onSuccess={handleSuccess}
+        />
+      )}
+
+      {selectedTransaction && showEditDialog && (
         <EditTransactionDialog
-          transaction={editingTransaction}
-          open={!!editingTransaction}
-          onOpenChange={(open) => {
-            if (!open) setEditingTransaction(null)
-          }}
-          onSuccess={handleEditComplete}
+          transaction={selectedTransaction}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSuccess={handleSuccess}
+        />
+      )}
+
+      {selectedTransaction && showDeleteDialog && (
+        <DeleteTransactionDialog
+          transaction={selectedTransaction}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onSuccess={handleSuccess}
         />
       )}
     </>

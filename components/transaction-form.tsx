@@ -2,311 +2,291 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "lucide-react"
-import { Upload } from "lucide-react"
+import { format } from "date-fns"
+import { vi } from "date-fns/locale"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { CalendarIcon, Loader2 } from "lucide-react"
 
-// Cập nhật interface TransactionFormProps
 interface TransactionFormProps {
-  onSuccess?: () => void
-  onAddTransaction?: (transaction: any) => void
-  currentDate?: Date
+  onSubmit: (formData: FormData) => Promise<void>
+  isSubmitting?: boolean
+  initialType?: "expense" | "income"
+  initialValues?: {
+    date?: Date
+    category?: string
+    description?: string
+    amount?: string
+    subCategory?: string
+    fuelLiters?: string
+    paymentMethod?: string
+  }
+  onCancel?: () => void
 }
 
-// Cập nhật TransactionForm để nhận currentDate
-export function TransactionForm({ onSuccess, onAddTransaction, currentDate = new Date() }: TransactionFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [activeTab, setActiveTab] = useState("expense")
-  const [formData, setFormData] = useState({
-    category: "",
-    subCategory: "",
-    description: "",
-    amount: "",
-    paymentMethod: "transfer",
-    date: `${currentDate.getDate().toString().padStart(2, "0")}/${(currentDate.getMonth() + 1).toString().padStart(2, "0")}/${currentDate.getFullYear()}`,
-    type: "expense",
-    receiptUrl: "",
-  })
+export function TransactionForm({
+  onSubmit,
+  isSubmitting = false,
+  initialType = "expense",
+  initialValues = {},
+  onCancel,
+}: TransactionFormProps) {
+  const [type, setType] = useState<"expense" | "income">(initialType)
+  const [date, setDate] = useState<Date>(initialValues.date || new Date())
+  const [category, setCategory] = useState<string>(initialValues.category || "")
+  const [subCategory, setSubCategory] = useState<string>(initialValues.subCategory || "")
+  const [description, setDescription] = useState<string>(initialValues.description || "")
+  const [amount, setAmount] = useState<string>(initialValues.amount || "")
+  const [formattedAmount, setFormattedAmount] = useState<string>("")
+  const [fuelLiters, setFuelLiters] = useState<string>(initialValues.fuelLiters || "")
+  const [paymentMethod, setPaymentMethod] = useState<string>(initialValues.paymentMethod || "transfer")
+  const [showCarSubcategories, setShowCarSubcategories] = useState(
+    initialValues.category === "Chi phí xe ô tô" || false,
+  )
 
-  // Thêm state cho file upload
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [uploadStatus, setUploadStatus] = useState("")
+  // Format initial amount if provided
+  useEffect(() => {
+    if (initialValues.amount) {
+      const numericAmount = Number(initialValues.amount.replace(/[^\d]/g, ""))
+      if (!isNaN(numericAmount)) {
+        setFormattedAmount(
+          new Intl.NumberFormat("vi-VN", {
+            style: "decimal",
+            maximumFractionDigits: 0,
+          }).format(numericAmount),
+        )
+      }
+    }
+  }, [initialValues.amount])
 
-  // Cập nhật handleChange để cập nhật type dựa trên tab
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+  // Format amount when it changes
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^\d]/g, "")
+    setAmount(value)
 
-  // Thêm hàm xử lý khi chọn tab
-  const handleTabChange = (value: string) => {
-    setActiveTab(value)
-    setFormData((prev) => ({ ...prev, type: value }))
-  }
-
-  // Thêm hàm xử lý file
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setSelectedFile(file)
-      setUploadStatus(`Đã chọn file: ${file.name}`)
+    if (value) {
+      const numericValue = Number(value)
+      setFormattedAmount(
+        new Intl.NumberFormat("vi-VN", {
+          style: "decimal",
+          maximumFractionDigits: 0,
+        }).format(numericValue),
+      )
+    } else {
+      setFormattedAmount("")
     }
   }
 
-  // Giả lập upload file
-  const uploadFile = async (file: File) => {
-    setUploadProgress(0)
-    setUploadStatus("Đang tải lên...")
+  // Handle category change
+  const handleCategoryChange = (value: string) => {
+    setCategory(value)
 
-    // Giả lập tiến trình upload
-    for (let i = 0; i <= 100; i += 10) {
-      setUploadProgress(i)
-      await new Promise((resolve) => setTimeout(resolve, 100))
+    // Show car subcategories if category is "Chi phí xe ô tô"
+    if (value === "Chi phí xe ô tô") {
+      setShowCarSubcategories(true)
+      setSubCategory("Xăng") // Default subcategory
+    } else {
+      setShowCarSubcategories(false)
+      setSubCategory("")
     }
-
-    // Giả lập URL ảnh đã upload
-    const fakeReceiptUrl = "https://example.com/receipts/" + Date.now() + ".jpg"
-    setUploadStatus("Đã tải lên thành công")
-    return fakeReceiptUrl
   }
 
-  // Cập nhật handleSubmit để lưu giao dịch và gọi onAddTransaction
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
-    try {
-      let receiptUrl = ""
-
-      // Upload file nếu có
-      if (selectedFile) {
-        receiptUrl = await uploadFile(selectedFile)
-      }
-
-      // Tạo đối tượng giao dịch
-      const transaction = {
-        ...formData,
-        receiptUrl,
-        id: Date.now().toString(),
-        timestamp: new Date().toISOString(),
-      }
-
-      // Giả lập lưu lên Google Sheets
-      console.log("Lưu giao dịch lên Google Sheets:", transaction)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Gọi callback để thêm giao dịch vào state
-      if (onAddTransaction) {
-        onAddTransaction(transaction)
-      }
-
-      // Reset form
-      setFormData({
-        category: "",
-        subCategory: "",
-        description: "",
-        amount: "",
-        paymentMethod: "transfer",
-        date: `${currentDate.getDate().toString().padStart(2, "0")}/${(currentDate.getMonth() + 1).toString().padStart(2, "0")}/${currentDate.getFullYear()}`,
-        type: activeTab,
-        receiptUrl: "",
-      })
-      setSelectedFile(null)
-      setUploadProgress(0)
-      setUploadStatus("")
-
-      // Gọi callback thành công
-      if (onSuccess) {
-        onSuccess()
-      }
-    } catch (error) {
-      console.error("Lỗi khi lưu giao dịch:", error)
-      setUploadStatus("Lỗi khi lưu giao dịch")
-    } finally {
-      setIsSubmitting(false)
+    // Validate form
+    if (!category || !description || !amount) {
+      alert("Vui lòng điền đầy đủ thông tin bắt buộc")
+      return
     }
+
+    // Format date as DD/MM/YYYY
+    const formattedDate = format(date, "dd/MM/yyyy")
+
+    // Create FormData
+    const formData = new FormData()
+    formData.append("date", formattedDate)
+    formData.append("category", category)
+    formData.append("description", description)
+    formData.append("amount", amount)
+    formData.append("type", type)
+    if (subCategory) formData.append("subCategory", subCategory)
+    if (fuelLiters) formData.append("fuelLiters", fuelLiters)
+    formData.append("paymentMethod", paymentMethod)
+
+    // Submit form
+    await onSubmit(formData)
   }
 
   // Danh sách danh mục chi tiêu
   const expenseCategories = ["Chi phí xe ô tô", "Nhà hàng", "Giao nhận đồ", "Mua đồ/dịch vụ", "Chi phí khác"]
 
-  // Danh sách danh mục thu nhập - Cập nhật theo yêu cầu
+  // Danh sách danh mục thu nhập
   const incomeCategories = ["Ứng tài khoản", "Ứng tiền mặt", "Hoàn tiền"]
 
-  // Danh sách phương thức thanh toán - Cập nhật theo yêu cầu
+  // Danh sách danh mục con cho chi phí xe ô tô
+  const carSubCategories = [
+    { id: "xang", name: "Xăng" },
+    { id: "ve-do-xe", name: "Vé đỗ xe ô tô" },
+    { id: "vetc", name: "VETC" },
+    { id: "rua-xe", name: "Rửa xe" },
+    { id: "bao-duong", name: "Bảo dưỡng" },
+    { id: "sua-chua", name: "Sửa chữa" },
+    { id: "dang-kiem-bh", name: "Đăng kiểm / Bảo hiểm" },
+  ]
+
+  // Danh sách phương thức thanh toán
   const paymentMethods = [
     { id: "transfer", name: "Chuyển khoản" },
     { id: "cash", name: "Tiền mặt" },
   ]
 
   return (
-    <div className="p-4">
-      <Tabs defaultValue="expense" onValueChange={handleTabChange}>
-        <TabsList className="w-full grid grid-cols-2 mb-4">
-          <TabsTrigger
-            value="expense"
-            className="py-3 bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-l-lg"
-          >
-            Chi
-          </TabsTrigger>
-          <TabsTrigger
-            value="income"
-            className="py-3 bg-gray-100 data-[state=active]:bg-techcom-red data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-700 rounded-r-lg"
-          >
-            Thu
-          </TabsTrigger>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <Tabs defaultValue={type} onValueChange={(value) => setType(value as "expense" | "income")} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="expense">Chi tiêu</TabsTrigger>
+          <TabsTrigger value="income">Thu nhập</TabsTrigger>
         </TabsList>
+      </Tabs>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
-                Danh mục <span className="text-red-500 ml-1">*</span>
-              </label>
-              <TabsContent value="expense">
-                <Select value={formData.category} onValueChange={(value) => handleChange("category", value)} required>
-                  <SelectTrigger className="rounded-lg">
-                    <SelectValue placeholder="Chọn danh mục" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {expenseCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TabsContent>
-
-              <TabsContent value="income">
-                <Select value={formData.category} onValueChange={(value) => handleChange("category", value)} required>
-                  <SelectTrigger className="rounded-lg">
-                    <SelectValue placeholder="Chọn danh mục" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {incomeCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TabsContent>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
-                Mô tả <span className="text-red-500 ml-1">*</span>
-              </label>
-              <Input
-                placeholder="Nhập mô tả"
-                value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-                required
-                className="rounded-lg"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
-                Số tiền <span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={formData.amount}
-                  onChange={(e) => handleChange("amount", e.target.value)}
-                  required
-                  className="pr-16 rounded-lg"
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
-                  VND
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
-                Phương thức thanh toán <span className="text-red-500 ml-1">*</span>
-              </label>
-              <Select
-                value={formData.paymentMethod}
-                onValueChange={(value) => handleChange("paymentMethod", value)}
-                required
+      <div className="space-y-4">
+        <div className="grid gap-2">
+          <Label htmlFor="date">Ngày</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
               >
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Chọn phương thức" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((method) => (
-                    <SelectItem key={method.id} value={method.id}>
-                      {method.name}
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? format(date, "PPP", { locale: vi }) : <span>Chọn ngày</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar mode="single" selected={date} onSelect={(date) => date && setDate(date)} initialFocus />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="category">Danh mục</Label>
+          <Select value={category} onValueChange={handleCategoryChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn danh mục" />
+            </SelectTrigger>
+            <SelectContent>
+              {type === "expense"
+                ? expenseCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))
+                : incomeCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+            </SelectContent>
+          </Select>
+        </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center">
-                Ngày <span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <Input
-                  type="text"
-                  value={formData.date}
-                  onChange={(e) => handleChange("date", e.target.value)}
-                  required
-                  className="pl-10 rounded-lg"
-                  readOnly
-                />
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                  <Calendar className="h-4 w-4" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Hình ảnh (hóa đơn, biên lai...)</label>
-              <div className="border border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center">
-                <input type="file" id="receipt" className="hidden" accept="image/*" onChange={handleFileChange} />
-                <label htmlFor="receipt" className="cursor-pointer flex flex-col items-center">
-                  <Upload className="h-6 w-6 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500 text-center">Bấm để tải lên hoặc kéo thả file</p>
-                </label>
-              </div>
-              {selectedFile && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600">{uploadStatus}</p>
-                  {uploadProgress > 0 && (
-                    <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                      <div className="bg-techcom-red h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <Button type="button" variant="outline" onClick={onSuccess} className="w-full rounded-lg">
-                Hủy
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-techcom-red hover:bg-techcom-darkred text-white rounded-lg"
-              >
-                {isSubmitting ? "Đang lưu..." : "Lưu"}
-              </Button>
-            </div>
+        {showCarSubcategories && (
+          <div className="grid gap-2">
+            <Label htmlFor="subCategory">Loại chi phí xe</Label>
+            <Select value={subCategory} onValueChange={setSubCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn loại chi phí xe" />
+              </SelectTrigger>
+              <SelectContent>
+                {carSubCategories.map((subCat) => (
+                  <SelectItem key={subCat.id} value={subCat.name}>
+                    {subCat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </form>
-      </Tabs>
-    </div>
+        )}
+
+        {subCategory === "Xăng" && (
+          <div className="grid gap-2">
+            <Label htmlFor="fuelLiters">Số lít xăng</Label>
+            <Input
+              id="fuelLiters"
+              placeholder="Nhập số lít xăng"
+              value={fuelLiters}
+              onChange={(e) => setFuelLiters(e.target.value)}
+              type="number"
+              step="0.01"
+            />
+          </div>
+        )}
+
+        <div className="grid gap-2">
+          <Label htmlFor="description">Mô tả</Label>
+          <Input
+            id="description"
+            placeholder="Nhập mô tả giao dịch"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="amount">Số tiền</Label>
+          <Input
+            id="amount"
+            placeholder="Nhập số tiền"
+            value={formattedAmount}
+            onChange={handleAmountChange}
+            required
+            inputMode="numeric"
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="paymentMethod">Phương thức thanh toán</Label>
+          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn phương thức thanh toán" />
+            </SelectTrigger>
+            <SelectContent>
+              {paymentMethods.map((method) => (
+                <SelectItem key={method.id} value={method.id}>
+                  {method.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex justify-between gap-2 pt-2">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+              Hủy
+            </Button>
+          )}
+          <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Đang xử lý...
+              </>
+            ) : (
+              "Lưu giao dịch"
+            )}
+          </Button>
+        </div>
+      </div>
+    </form>
   )
 }
