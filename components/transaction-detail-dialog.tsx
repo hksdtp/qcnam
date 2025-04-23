@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DirectReceiptViewer } from "@/components/direct-receipt-viewer"
 import { EditIcon, TrashIcon, X } from "lucide-react"
-import { formatCurrency } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 
 interface TransactionDetailDialogProps {
   transaction: any
@@ -46,10 +46,19 @@ export function TransactionDetailDialog({
               <p className="text-sm text-muted-foreground">{transaction.date}</p>
             </div>
             <div
-              className={`text-xl font-bold ${transaction.type === "income" ? "text-emerald-600" : "text-rose-600"}`}
+              className={cn(
+                "font-medium text-xl",
+                transaction.type === "income"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-rose-600 dark:text-rose-400",
+              )}
             >
               {transaction.type === "income" ? "+" : "-"}
-              {formatCurrency(transaction.amount)}
+              {new Intl.NumberFormat("vi-VN", {
+                style: "currency",
+                currency: "VND",
+                maximumFractionDigits: 0,
+              }).format(transaction.amount)}
             </div>
           </div>
 
@@ -94,30 +103,18 @@ export function TransactionDetailDialog({
           {transaction.receiptLink && (
             <div>
               <p className="text-sm text-muted-foreground mb-2">Hóa đơn</p>
-              <DirectReceiptViewer receiptLink={transaction.receiptLink} size="lg" />
+              <div className="flex justify-center">
+                <DirectReceiptViewer receiptLink={transaction.receiptLink} size="lg" />
+              </div>
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button
-              variant="outline"
-              className="flex items-center gap-1"
-              onClick={() => {
-                onOpenChange(false)
-                onEdit(transaction)
-              }}
-            >
+            <Button variant="outline" className="flex items-center gap-1" onClick={() => onEdit(transaction)}>
               <EditIcon className="h-4 w-4" />
               Chỉnh sửa
             </Button>
-            <Button
-              variant="destructive"
-              className="flex items-center gap-1"
-              onClick={() => {
-                onOpenChange(false)
-                onDelete(transaction)
-              }}
-            >
+            <Button variant="destructive" className="flex items-center gap-1" onClick={() => onDelete(transaction)}>
               <TrashIcon className="h-4 w-4" />
               Xóa
             </Button>

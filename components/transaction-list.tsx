@@ -4,15 +4,16 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { EditIcon, TrashIcon } from "lucide-react"
-import { cn, formatCurrency } from "@/lib/utils"
+import { EditIcon, TrashIcon, ChevronRightIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { DirectReceiptViewer } from "@/components/direct-receipt-viewer"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
-import { DeleteTransactionDialog } from "@/components/delete-transaction-dialog"
-import { TransactionDetailDialog } from "@/components/transaction-detail-dialog"
 import { useDate } from "@/lib/date-context"
 import { useTransactions } from "@/lib/hooks"
 import { Skeleton } from "@/components/ui/skeleton"
+import { deleteTransaction } from "@/lib/actions"
+import { useToast } from "@/components/ui/use-toast"
+import { TransactionDetailDialog } from "./transaction-detail-dialog"
 
 export function TransactionList({
   category = "all",
@@ -26,10 +27,10 @@ export function TransactionList({
   const year = currentDate.getFullYear()
 
   const { transactions, isLoading, mutate } = useTransactions(month, year)
-  const [selectedTransaction, setSelectedTransaction] = useState<any>(null)
+  const [editingTransaction, setEditingTransaction] = useState<any>(null)
+  const [viewingTransaction, setViewingTransaction] = useState<any>(null)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
-  const [showEditDialog, setShowEditDialog] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const { toast } = useToast()
 
   // Filter transactions based on props
   const filteredTransactions = transactions
@@ -52,25 +53,54 @@ export function TransactionList({
 
   const handleViewDetail = (transaction: any) => {
     console.log("Viewing transaction details:", transaction)
-    setSelectedTransaction(transaction)
+    setViewingTransaction(transaction)
     setShowDetailDialog(true)
   }
 
   const handleEdit = (transaction: any) => {
     console.log("Editing transaction:", transaction)
-    setSelectedTransaction(transaction)
-    setShowEditDialog(true)
+    setEditingTransaction(transaction)
   }
 
-  const handleDelete = (transaction: any) => {
+  const handleDelete = async (transaction: any) => {
     console.log("Deleting transaction:", transaction)
-    setSelectedTransaction(transaction)
-    setShowDeleteDialog(true)
+
+    if (!window.confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return
+
+    const formData = new FormData()
+    formData.append("rowIndex", transaction.rowIndex.toString())
+
+    try {
+      const result = await deleteTransaction(formData)
+
+      if (result.success) {
+        toast({
+          title: "Xóa giao dịch thành công",
+          description: "Giao dịch đã được xóa khỏi hệ thống",
+        })
+
+        // Refresh data
+        mutate()
+      } else {
+        toast({
+          title: "Lỗi khi xóa giao dịch",
+          description: result.error || "Đã xảy ra lỗi không xác định",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error deleting transaction:", error)
+      toast({
+        title: "Lỗi khi xóa giao dịch",
+        description: error.message || "Đã xảy ra lỗi không xác định",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleSuccess = () => {
-    console.log("Transaction operation successful, refreshing data")
-    // Refresh data with force revalidation
+  const handleEditComplete = () => {
+    setEditingTransaction(null)
+    // Refresh data
     mutate()
   }
 
@@ -113,32 +143,34 @@ export function TransactionList({
               {filteredTransactions.map((transaction) => (
                 <div
                   key={transaction.id || `${transaction.date}-${transaction.amount}-${Math.random()}`}
-                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 rounded-md p-2 -mx-2"
-                  onClick={() => handleViewDetail(transaction)}
+                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 hover:bg-gray-50 rounded-md p-2 -mx-2 transition-colors relative group"
                 >
-                  <div className="space-y-1">
-                    <p className="font-medium">{transaction.description}</p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm text-muted-foreground">{transaction.date}</span>
-                      <Badge variant="outline">{transaction.category}</Badge>
-                      {transaction.subCategory && (
-                        <Badge variant="outline" className="bg-blue-50">
-                          {transaction.subCategory}
-                        </Badge>
-                      )}
-                      {transaction.paymentMethod && (
-                        <Badge variant="outline" className="bg-gray-50">
-                          {transaction.paymentMethod === "cash" ? "Tiền mặt" : "Chuyển khoản"}
-                        </Badge>
-                      )}
-                      {transaction.receiptLink && (
-                        <span onClick={(e) => e.stopPropagation()}>
-                          <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
-                        </span>
-                      )}
+                  <div
+                    className="flex-1 cursor-pointer flex items-center justify-between pr-16"
+                    onClick={() => handleViewDetail(transaction)}
+                  >
+                    <div className="space-y-1">
+                      <p className="font-medium">{transaction.description}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-muted-foreground">{transaction.date}</span>
+                        <Badge variant="outline">{transaction.category}</Badge>
+                        {transaction.subCategory && (
+                          <Badge variant="outline" className="bg-blue-50">
+                            {transaction.subCategory}
+                          </Badge>
+                        )}
+                        {transaction.paymentMethod && (
+                          <Badge variant="outline" className="bg-gray-50">
+                            {transaction.paymentMethod === "cash" ? "Tiền mặt" : "Chuyển khoản"}
+                          </Badge>
+                        )}
+                        {transaction.receiptLink && (
+                          <span onClick={(e) => e.stopPropagation()}>
+                            <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <span
                       className={cn(
                         "font-medium",
@@ -148,37 +180,40 @@ export function TransactionList({
                       )}
                     >
                       {transaction.type === "income" ? "+" : "-"}
-                      {formatCurrency(transaction.amount)}
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                        maximumFractionDigits: 0,
+                      }).format(transaction.amount)}
                     </span>
-                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleEdit(transaction)
-                        }}
-                      >
-                        <EditIcon className="h-4 w-4" />
-                        <span className="sr-only">Edit</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleDelete(transaction)
-                        }}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                    </div>
                   </div>
+                  <div className="flex gap-1 absolute right-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEdit(transaction)
+                      }}
+                    >
+                      <EditIcon className="h-4 w-4" />
+                      <span className="sr-only">Edit</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(transaction)
+                      }}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
+                  <ChevronRightIcon className="h-4 w-4 text-muted-foreground absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               ))}
             </div>
@@ -186,37 +221,33 @@ export function TransactionList({
         </CardContent>
       </Card>
 
-      {selectedTransaction && showDetailDialog && (
+      {editingTransaction && (
+        <EditTransactionDialog
+          transaction={editingTransaction}
+          open={!!editingTransaction}
+          onOpenChange={() => setEditingTransaction(null)}
+          onComplete={handleEditComplete}
+        />
+      )}
+
+      {viewingTransaction && (
         <TransactionDetailDialog
-          transaction={selectedTransaction}
+          transaction={viewingTransaction}
           open={showDetailDialog}
-          onOpenChange={setShowDetailDialog}
+          onOpenChange={(open) => {
+            setShowDetailDialog(open)
+            if (!open) setViewingTransaction(null)
+          }}
           onEdit={(transaction) => {
             setShowDetailDialog(false)
+            setViewingTransaction(null)
             setTimeout(() => handleEdit(transaction), 100)
           }}
           onDelete={(transaction) => {
             setShowDetailDialog(false)
+            setViewingTransaction(null)
             setTimeout(() => handleDelete(transaction), 100)
           }}
-        />
-      )}
-
-      {selectedTransaction && showEditDialog && (
-        <EditTransactionDialog
-          transaction={selectedTransaction}
-          open={showEditDialog}
-          onOpenChange={setShowEditDialog}
-          onSuccess={handleSuccess}
-        />
-      )}
-
-      {selectedTransaction && showDeleteDialog && (
-        <DeleteTransactionDialog
-          transaction={selectedTransaction}
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          onSuccess={handleSuccess}
         />
       )}
     </>
