@@ -21,6 +21,9 @@ export function EditTransactionDialog({ transaction, open, onOpenChange, onSucce
 
   if (!transaction) return null
 
+  // Debug log to verify transaction data
+  console.log("Edit transaction dialog:", transaction)
+
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true)
 

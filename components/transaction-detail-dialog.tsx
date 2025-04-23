@@ -24,6 +24,9 @@ export function TransactionDetailDialog({
 }: TransactionDetailDialogProps) {
   if (!transaction) return null
 
+  // Debug log to verify transaction data
+  console.log("Transaction detail dialog:", transaction)
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
@@ -110,11 +113,21 @@ export function TransactionDetailDialog({
           )}
 
           <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" className="flex items-center gap-1" onClick={() => onEdit(transaction)}>
+            <Button
+              variant="outline"
+              className="flex items-center gap-1"
+              onClick={() => onEdit(transaction)}
+              data-testid="detail-edit-button"
+            >
               <EditIcon className="h-4 w-4" />
               Chỉnh sửa
             </Button>
-            <Button variant="destructive" className="flex items-center gap-1" onClick={() => onDelete(transaction)}>
+            <Button
+              variant="destructive"
+              className="flex items-center gap-1"
+              onClick={() => onDelete(transaction)}
+              data-testid="detail-delete-button"
+            >
               <TrashIcon className="h-4 w-4" />
               Xóa
             </Button>

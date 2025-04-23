@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { EditIcon, TrashIcon, EyeIcon } from "lucide-react"
+import { EditIcon, TrashIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DirectReceiptViewer } from "@/components/direct-receipt-viewer"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
@@ -31,6 +31,13 @@ export function TransactionList({
   const [viewingTransaction, setViewingTransaction] = useState<any>(null)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
   const { toast } = useToast()
+
+  // Debug log to verify transactions are loaded
+  useEffect(() => {
+    if (transactions.length > 0) {
+      console.log("Transactions loaded:", transactions.length)
+    }
+  }, [transactions])
 
   // Filter transactions based on props
   const filteredTransactions = transactions
@@ -79,8 +86,8 @@ export function TransactionList({
           description: "Giao dịch đã được xóa khỏi hệ thống",
         })
 
-        // Refresh data
-        mutate()
+        // Refresh data with force revalidation
+        mutate(undefined, { revalidate: true })
       } else {
         toast({
           title: "Lỗi khi xóa giao dịch",
@@ -100,8 +107,8 @@ export function TransactionList({
 
   const handleEditComplete = () => {
     setEditingTransaction(null)
-    // Refresh data
-    mutate()
+    // Refresh data with force revalidation
+    mutate(undefined, { revalidate: true })
   }
 
   if (isLoading) {
@@ -143,9 +150,11 @@ export function TransactionList({
               {filteredTransactions.map((transaction) => (
                 <div
                   key={transaction.id || `${transaction.date}-${transaction.amount}-${Math.random()}`}
-                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 hover:bg-gray-50 rounded-md p-2 -mx-2 transition-colors cursor-pointer"
+                  onClick={() => handleViewDetail(transaction)}
+                  data-testid="transaction-item"
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex-1">
                     <p className="font-medium">{transaction.description}</p>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm text-muted-foreground">{transaction.date}</span>
@@ -161,38 +170,13 @@ export function TransactionList({
                         </Badge>
                       )}
                       {transaction.receiptLink && (
-                        <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                        </span>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 rounded-full bg-blue-50 hover:bg-blue-100 border-blue-200"
-                        onClick={() => handleViewDetail(transaction)}
-                      >
-                        <EyeIcon className="h-3.5 w-3.5 mr-1" />
-                        Chi tiết
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 rounded-full bg-gray-50 hover:bg-gray-100 border-gray-200"
-                        onClick={() => handleEdit(transaction)}
-                      >
-                        <EditIcon className="h-3.5 w-3.5 mr-1" />
-                        Sửa
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 rounded-full bg-red-50 hover:bg-red-100 border-red-200 text-red-600"
-                        onClick={() => handleDelete(transaction)}
-                      >
-                        <TrashIcon className="h-3.5 w-3.5 mr-1" />
-                        Xóa
-                      </Button>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex items-center gap-3">
                     <span
                       className={cn(
                         "font-medium",
@@ -208,6 +192,36 @@ export function TransactionList({
                         maximumFractionDigits: 0,
                       }).format(transaction.amount)}
                     </span>
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleEdit(transaction)
+                        }}
+                        data-testid="edit-button"
+                      >
+                        <EditIcon className="h-4 w-4" />
+                        <span className="sr-only">Edit</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleDelete(transaction)
+                        }}
+                        data-testid="delete-button"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -220,8 +234,10 @@ export function TransactionList({
         <EditTransactionDialog
           transaction={editingTransaction}
           open={!!editingTransaction}
-          onOpenChange={() => setEditingTransaction(null)}
-          onComplete={handleEditComplete}
+          onOpenChange={(open) => {
+            if (!open) setEditingTransaction(null)
+          }}
+          onSuccess={handleEditComplete}
         />
       )}
 
