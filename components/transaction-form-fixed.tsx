@@ -394,6 +394,11 @@ export function TransactionFormFixed({
       // Use the provided onSubmit function if available, otherwise use the default addTransaction
       if (onSubmit) {
         await onSubmit(serverFormData)
+
+        // Gọi callback thành công nếu có
+        if (onSuccess) {
+          onSuccess()
+        }
       } else {
         // Gọi server action để lưu vào Google Sheets
         const result = await addTransaction(serverFormData)

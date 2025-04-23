@@ -67,8 +67,8 @@ export function TransactionList({
           description: "Giao dịch đã được xóa khỏi hệ thống",
         })
 
-        // Refresh data
-        mutate()
+        // Refresh data with force revalidation
+        mutate(undefined, { revalidate: true })
       } else {
         toast({
           title: "Lỗi khi xóa giao dịch",
@@ -87,8 +87,8 @@ export function TransactionList({
 
   const handleEditComplete = () => {
     setEditingTransaction(null)
-    // Refresh data
-    mutate()
+    // Refresh data with force revalidation
+    mutate(undefined, { revalidate: true })
   }
 
   if (isLoading) {

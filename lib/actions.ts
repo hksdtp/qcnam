@@ -281,25 +281,33 @@ export async function editTransaction(formData: FormData) {
     const { sheets } = await initGoogleAPIs()
     const SPREADSHEET_ID = await getSpreadsheetId()
 
-    // Chuẩn bị dữ liệu để cập nhật
-    const rowData = [
-      date,
-      category,
-      description,
-      amount.toString(),
-      type,
-      "", // Giữ nguyên link hóa đơn
-      "", // Giữ nguyên timestamp
-      subCategory || "",
-      fuelLiters || "",
-      paymentMethod || "transfer",
-      "", // Ghi chú (để trống)
-    ]
-
-    console.log(`Cập nhật giao dịch tại hàng ${rowIndex}:`, rowData)
-
-    // Cập nhật dữ liệu trong Sheet1
+    // Lấy dữ liệu hiện tại để giữ lại các trường không thay đổi
     try {
+      const currentData = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Sheet1!A${rowIndex}:K${rowIndex}`,
+      })
+
+      const currentRow = currentData.data.values?.[0] || []
+
+      // Chuẩn bị dữ liệu để cập nhật
+      const rowData = [
+        date,
+        category,
+        description,
+        amount.toString(),
+        type,
+        currentRow[5] || "", // Giữ nguyên link hóa đơn
+        currentRow[6] || new Date().toISOString(), // Giữ nguyên timestamp
+        subCategory || "",
+        fuelLiters || "",
+        paymentMethod || "transfer",
+        currentRow[10] || "", // Giữ nguyên ghi chú
+      ]
+
+      console.log(`Cập nhật giao dịch tại hàng ${rowIndex}:`, rowData)
+
+      // Cập nhật dữ liệu trong Sheet1
       const updateResult = await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
         range: `Sheet1!A${rowIndex}:K${rowIndex}`,

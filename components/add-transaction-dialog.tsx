@@ -40,19 +40,22 @@ export function AddTransactionDialog({
       const result = await addTransaction(formData)
 
       if (result.success) {
-        toast({
-          title: "Thêm giao dịch thành công",
-          description: "Giao dịch đã được thêm vào hệ thống",
-        })
+        // Tự động đóng dialog khi thêm giao dịch thành công
+        onOpenChange(false)
+
+        // Hiển thị thông báo thành công sau khi đóng dialog
+        setTimeout(() => {
+          toast({
+            title: "Thêm giao dịch thành công",
+            description: "Giao dịch đã được thêm vào hệ thống",
+          })
+        }, 300)
 
         // Refresh all data
         mutateTransactions()
         mutateAccountData()
         mutateCarData()
         mutateSummary()
-
-        // Close the dialog
-        onOpenChange(false)
 
         // Call onAddTransaction callback if provided
         if (onAddTransaction && result.transaction) {
