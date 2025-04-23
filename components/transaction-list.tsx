@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { EditIcon, TrashIcon, ChevronRightIcon } from "lucide-react"
+import { EditIcon, TrashIcon, EyeIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DirectReceiptViewer } from "@/components/direct-receipt-viewer"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
@@ -143,34 +143,56 @@ export function TransactionList({
               {filteredTransactions.map((transaction) => (
                 <div
                   key={transaction.id || `${transaction.date}-${transaction.amount}-${Math.random()}`}
-                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 hover:bg-gray-50 rounded-md p-2 -mx-2 transition-colors relative group"
+                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
                 >
-                  <div
-                    className="flex-1 cursor-pointer flex items-center justify-between pr-16"
-                    onClick={() => handleViewDetail(transaction)}
-                  >
-                    <div className="space-y-1">
-                      <p className="font-medium">{transaction.description}</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-muted-foreground">{transaction.date}</span>
-                        <Badge variant="outline">{transaction.category}</Badge>
-                        {transaction.subCategory && (
-                          <Badge variant="outline" className="bg-blue-50">
-                            {transaction.subCategory}
-                          </Badge>
-                        )}
-                        {transaction.paymentMethod && (
-                          <Badge variant="outline" className="bg-gray-50">
-                            {transaction.paymentMethod === "cash" ? "Tiền mặt" : "Chuyển khoản"}
-                          </Badge>
-                        )}
-                        {transaction.receiptLink && (
-                          <span onClick={(e) => e.stopPropagation()}>
-                            <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
-                          </span>
-                        )}
-                      </div>
+                  <div className="space-y-1">
+                    <p className="font-medium">{transaction.description}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm text-muted-foreground">{transaction.date}</span>
+                      <Badge variant="outline">{transaction.category}</Badge>
+                      {transaction.subCategory && (
+                        <Badge variant="outline" className="bg-blue-50">
+                          {transaction.subCategory}
+                        </Badge>
+                      )}
+                      {transaction.paymentMethod && (
+                        <Badge variant="outline" className="bg-gray-50">
+                          {transaction.paymentMethod === "cash" ? "Tiền mặt" : "Chuyển khoản"}
+                        </Badge>
+                      )}
+                      {transaction.receiptLink && (
+                        <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 rounded-full bg-blue-50 hover:bg-blue-100 border-blue-200"
+                        onClick={() => handleViewDetail(transaction)}
+                      >
+                        <EyeIcon className="h-3.5 w-3.5 mr-1" />
+                        Chi tiết
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 rounded-full bg-gray-50 hover:bg-gray-100 border-gray-200"
+                        onClick={() => handleEdit(transaction)}
+                      >
+                        <EditIcon className="h-3.5 w-3.5 mr-1" />
+                        Sửa
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 rounded-full bg-red-50 hover:bg-red-100 border-red-200 text-red-600"
+                        onClick={() => handleDelete(transaction)}
+                      >
+                        <TrashIcon className="h-3.5 w-3.5 mr-1" />
+                        Xóa
+                      </Button>
                     </div>
+                  </div>
+                  <div>
                     <span
                       className={cn(
                         "font-medium",
@@ -187,33 +209,6 @@ export function TransactionList({
                       }).format(transaction.amount)}
                     </span>
                   </div>
-                  <div className="flex gap-1 absolute right-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleEdit(transaction)
-                      }}
-                    >
-                      <EditIcon className="h-4 w-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDelete(transaction)
-                      }}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
-                  </div>
-                  <ChevronRightIcon className="h-4 w-4 text-muted-foreground absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               ))}
             </div>
