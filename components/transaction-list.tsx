@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { EditIcon, TrashIcon, EyeIcon } from "lucide-react"
+import { EditIcon, TrashIcon, MoreHorizontal, EyeIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DirectReceiptViewer } from "@/components/direct-receipt-viewer"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { deleteTransaction } from "@/lib/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { TransactionDetailDialog } from "./transaction-detail-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 export function TransactionList({
   category = "all",
@@ -143,13 +144,17 @@ export function TransactionList({
               {filteredTransactions.map((transaction) => (
                 <div
                   key={transaction.id || `${transaction.date}-${transaction.amount}-${Math.random()}`}
-                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 hover:bg-gray-50 rounded-md p-2 -mx-2 transition-colors relative"
+                  onClick={() => handleViewDetail(transaction)}
+                  style={{ cursor: "pointer" }}
                 >
-                  <div className="space-y-1">
+                  <div className="flex-1 pr-12">
                     <p className="font-medium">{transaction.description}</p>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap mt-1">
                       <span className="text-sm text-muted-foreground">{transaction.date}</span>
-                      <Badge variant="outline">{transaction.category}</Badge>
+                      <Badge variant="outline" className="bg-gray-50">
+                        {transaction.category}
+                      </Badge>
                       {transaction.subCategory && (
                         <Badge variant="outline" className="bg-blue-50">
                           {transaction.subCategory}
@@ -161,38 +166,13 @@ export function TransactionList({
                         </Badge>
                       )}
                       {transaction.receiptLink && (
-                        <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <DirectReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
+                        </span>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 rounded-full bg-blue-50 hover:bg-blue-100 border-blue-200"
-                        onClick={() => handleViewDetail(transaction)}
-                      >
-                        <EyeIcon className="h-3.5 w-3.5 mr-1" />
-                        Chi tiết
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 rounded-full bg-gray-50 hover:bg-gray-100 border-gray-200"
-                        onClick={() => handleEdit(transaction)}
-                      >
-                        <EditIcon className="h-3.5 w-3.5 mr-1" />
-                        Sửa
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 rounded-full bg-red-50 hover:bg-red-100 border-red-200 text-red-600"
-                        onClick={() => handleDelete(transaction)}
-                      >
-                        <TrashIcon className="h-3.5 w-3.5 mr-1" />
-                        Xóa
-                      </Button>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex items-center gap-3">
                     <span
                       className={cn(
                         "font-medium",
@@ -208,6 +188,33 @@ export function TransactionList({
                         maximumFractionDigits: 0,
                       }).format(transaction.amount)}
                     </span>
+                    <div onClick={(e) => e.stopPropagation()} className="flex">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Tùy chọn</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[160px]">
+                          <DropdownMenuItem onClick={() => handleViewDetail(transaction)}>
+                            <EyeIcon className="mr-2 h-4 w-4" />
+                            <span>Xem chi tiết</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(transaction)}>
+                            <EditIcon className="mr-2 h-4 w-4" />
+                            <span>Chỉnh sửa</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(transaction)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <TrashIcon className="mr-2 h-4 w-4" />
+                            <span>Xóa</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
               ))}
