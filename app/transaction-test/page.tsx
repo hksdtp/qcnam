@@ -1,5 +1,10 @@
 import { TransactionTest } from "@/components/transaction-test"
+import { DateProvider } from "@/lib/date-context"
 
 export default function TransactionTestPage() {
-  return <TransactionTest />
+  return (
+    <DateProvider>
+      <TransactionTest />
+    </DateProvider>
+  )
 }
