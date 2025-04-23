@@ -49,11 +49,14 @@ export function TransactionList({
     })
 
   const handleEdit = (transaction: any) => {
+    console.log("Editing transaction:", transaction)
     setEditingTransaction(transaction)
   }
 
   const handleDelete = async (transaction: any) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return
+    console.log("Deleting transaction:", transaction)
+
+    if (!window.confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return
 
     const formData = new FormData()
     formData.append("rowIndex", transaction.rowIndex.toString())
@@ -77,6 +80,7 @@ export function TransactionList({
         })
       }
     } catch (error) {
+      console.error("Error deleting transaction:", error)
       toast({
         title: "Lỗi khi xóa giao dịch",
         description: error.message || "Đã xảy ra lỗi không xác định",
@@ -129,7 +133,7 @@ export function TransactionList({
             <div className="space-y-4">
               {filteredTransactions.map((transaction) => (
                 <div
-                  key={transaction.id}
+                  key={transaction.id || `${transaction.date}-${transaction.amount}-${Math.random()}`}
                   className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
                 >
                   <div className="space-y-1">
@@ -169,7 +173,16 @@ export function TransactionList({
                       }).format(transaction.amount)}
                     </span>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(transaction)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleEdit(transaction)
+                        }}
+                      >
                         <EditIcon className="h-4 w-4" />
                         <span className="sr-only">Edit</span>
                       </Button>
@@ -177,7 +190,11 @@ export function TransactionList({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => handleDelete(transaction)}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleDelete(transaction)
+                        }}
                       >
                         <TrashIcon className="h-4 w-4" />
                         <span className="sr-only">Delete</span>
@@ -195,8 +212,10 @@ export function TransactionList({
         <EditTransactionDialog
           transaction={editingTransaction}
           open={!!editingTransaction}
-          onOpenChange={() => setEditingTransaction(null)}
-          onComplete={handleEditComplete}
+          onOpenChange={(open) => {
+            if (!open) setEditingTransaction(null)
+          }}
+          onSuccess={handleEditComplete}
         />
       )}
     </>
