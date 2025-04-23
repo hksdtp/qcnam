@@ -10,11 +10,6 @@ export function useTransactions(month: number, year: number) {
   const { data, error, mutate } = useSWR(
     `/api/transactions?month=${month}&year=${year}&refresh=${isManualRefresh}`,
     fetcher,
-    {
-      revalidateOnFocus: true,
-      revalidateOnMount: true,
-      dedupingInterval: 5000, // Giảm thời gian deduping xuống 5 giây
-    },
   )
 
   useEffect(() => {
