@@ -643,7 +643,7 @@ export function TransactionFormFixed({
             </div>
             
             <IOSDatePicker 
-              onDateSelect={(selectedDate) => setDate(selectedDate)}
+              onDateSelect={(selectedDate: Date) => setDate(selectedDate)}
               initialDate={date}
               onClose={() => {}}
             />

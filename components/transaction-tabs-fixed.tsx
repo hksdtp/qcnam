@@ -364,26 +364,26 @@ export function TransactionTabsFixed({
       const expenseTransactions = transactions.filter((t: Transaction) => t.type === "expense")
 
       if (activeCategory === "total") {
-        return expenseTransactions.reduce((sum, t: Transaction) => sum + t.amount, 0)
+        return expenseTransactions.reduce((sum: number, t: Transaction) => sum + t.amount, 0)
       } else if (activeCategory === "car" && activeSubCategory !== "all") {
         const categoryName = "Chi phí xe ô tô"
         const subCategoryName = carSubCategories.find((c) => c.id === activeSubCategory)?.name || ""
 
         return expenseTransactions
           .filter((t: Transaction) => t.category === categoryName && t.subCategory === subCategoryName)
-          .reduce((sum, t: Transaction) => sum + t.amount, 0)
+          .reduce((sum: number, t: Transaction) => sum + t.amount, 0)
       } else {
         const categoryName = getCategoryNameFromId(activeCategory, true)
-        return expenseTransactions.filter((t: Transaction) => t.category === categoryName).reduce((sum, t: Transaction) => sum + t.amount, 0)
+        return expenseTransactions.filter((t: Transaction) => t.category === categoryName).reduce((sum: number, t: Transaction) => sum + t.amount, 0)
       }
     } else {
       const incomeTransactions = transactions.filter((t: Transaction) => t.type === "income")
 
       if (activeCategory === "total") {
-        return incomeTransactions.reduce((sum, t: Transaction) => sum + t.amount, 0)
+        return incomeTransactions.reduce((sum: number, t: Transaction) => sum + t.amount, 0)
       } else {
         const categoryName = getCategoryNameFromId(activeCategory, false)
-        return incomeTransactions.filter((t: Transaction) => t.category === categoryName).reduce((sum, t: Transaction) => sum + t.amount, 0)
+        return incomeTransactions.filter((t: Transaction) => t.category === categoryName).reduce((sum: number, t: Transaction) => sum + t.amount, 0)
       }
     }
   }
@@ -541,7 +541,7 @@ export function TransactionTabsFixed({
                   <Loader2 className="h-8 w-8 animate-spin text-techcom-red mb-4" />
                   <p className="text-gray-500">Đang tải dữ liệu...</p>
                 </div>
-              ) : transactions.some((t) => t.type === "expense") ? (
+              ) : transactions.some((t: Transaction) => t.type === "expense") ? (
                 <div className="w-full space-y-3">
                   {/* Hiển thị danh sách giao dịch theo nhóm */}
                   {Object.keys(filteredTransactions).length > 0 ? (
@@ -567,7 +567,7 @@ export function TransactionTabsFixed({
                             <div className="flex items-center">
                               <span className="font-medium text-techcom-red mr-2">
                                 {formatCurrency(
-                                  categoryTransactions.reduce((sum, t) => sum + t.amount, 0),
+                                  categoryTransactions.reduce((sum: number, t: Transaction) => sum + t.amount, 0),
                                 )}
                               </span>
                               {expandedCategory === category ? (
@@ -612,7 +612,7 @@ export function TransactionTabsFixed({
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-100"
-                                    onClick={() => handleEditTransaction({ ...transaction, rowIndex: index })}
+                                    onClick={() => handleEditTransaction(transaction, index)}
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
@@ -689,7 +689,7 @@ export function TransactionTabsFixed({
             )}
 
             {/* Hiển thị tổng thu nhập cho danh mục đã chọn */}
-            {!isLoading && transactions.some((t) => t.type === "income") && (
+            {!isLoading && transactions.some((t: Transaction) => t.type === "income") && (
               <div className="bg-gray-50 p-4 rounded-lg mb-4 transition-all duration-300">
                 <div className="flex justify-between items-center">
                   <div>
@@ -709,7 +709,7 @@ export function TransactionTabsFixed({
                   <Loader2 className="h-8 w-8 animate-spin text-techcom-red mb-4" />
                   <p className="text-gray-500">Đang tải dữ liệu...</p>
                 </div>
-              ) : transactions.some((t) => t.type === "income") ? (
+              ) : transactions.some((t: Transaction) => t.type === "income") ? (
                 <div className="w-full space-y-3">
                   {/* Hiển thị danh sách giao dịch theo nhóm */}
                   {Object.keys(filteredTransactions).length > 0 ? (
@@ -735,7 +735,7 @@ export function TransactionTabsFixed({
                             <div className="flex items-center">
                               <span className="font-medium text-green-600 mr-2">
                                 {formatCurrency(
-                                  categoryTransactions.reduce((sum, t) => sum + t.amount, 0),
+                                  categoryTransactions.reduce((sum: number, t: Transaction) => sum + t.amount, 0),
                                 )}
                               </span>
                               {expandedCategory === category ? (
@@ -772,7 +772,7 @@ export function TransactionTabsFixed({
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-100"
-                                    onClick={() => handleEditTransaction({ ...transaction, rowIndex: index })}
+                                    onClick={() => handleEditTransaction(transaction, index)}
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>

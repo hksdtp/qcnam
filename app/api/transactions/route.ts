@@ -248,35 +248,35 @@ export async function GET(request: Request) {
             Expires: "0",
           },
         })
-      } catch (sheetsError) {
+      } catch (sheetsError: unknown) {
         console.error("Error fetching from Google Sheets:", sheetsError)
         return NextResponse.json(
           {
             success: false,
-            error: `Error fetching from Google Sheets: ${sheetsError.message}`,
-            details: sheetsError.stack,
+            error: `Error fetching from Google Sheets: ${sheetsError instanceof Error ? sheetsError.message : 'Unknown error'}`,
+            details: sheetsError instanceof Error ? sheetsError.stack : String(sheetsError),
           },
           { status: 500 },
         )
       }
-    } catch (googleApiError) {
+    } catch (googleApiError: unknown) {
       console.error("Error initializing Google APIs:", googleApiError)
       return NextResponse.json(
         {
           success: false,
-          error: `Error initializing Google APIs: ${googleApiError.message}`,
-          details: googleApiError.stack,
+          error: `Error initializing Google APIs: ${googleApiError instanceof Error ? googleApiError.message : 'Unknown error'}`,
+          details: googleApiError instanceof Error ? googleApiError.stack : String(googleApiError),
         },
         { status: 500 },
       )
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in transactions API route:", error)
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Unknown error",
-        details: error.stack,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : String(error),
       },
       { status: 500 },
     )

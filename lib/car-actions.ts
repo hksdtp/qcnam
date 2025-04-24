@@ -19,10 +19,10 @@ export async function ensureCarSheetSetup() {
     })
 
     // Lấy danh sách tất cả các sheet
-    const allSheets = response.data.sheets.map((s: any) => s.properties.title)
+    const allSheets = response.data.sheets ? response.data.sheets.map((s: any) => s.properties.title) : []
     console.log("Danh sách sheet:", allSheets)
 
-    const sheetExists = response.data.sheets.some((sheet: any) => sheet.properties.title === SHEET_NAME)
+    const sheetExists = response.data.sheets ? response.data.sheets.some((sheet: any) => sheet.properties.title === SHEET_NAME) : false
     console.log(`Sheet "${SHEET_NAME}" tồn tại: ${sheetExists}`)
 
     if (!sheetExists) {
@@ -30,7 +30,7 @@ export async function ensureCarSheetSetup() {
       // Tạo sheet Xe
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
-        resource: {
+        requestBody: {
           requests: [
             {
               addSheet: {
@@ -49,7 +49,7 @@ export async function ensureCarSheetSetup() {
         spreadsheetId: SPREADSHEET_ID,
         range: `${SHEET_NAME}!A1:B15`,
         valueInputOption: "RAW",
-        resource: {
+        requestBody: {
           values: [
             ["Thông số", "Giá trị"],
             ["Tiêu hao nhiên liệu", "7.50"],
@@ -71,9 +71,9 @@ export async function ensureCarSheetSetup() {
     }
 
     return { success: true, message: "Sheet Xe đã được thiết lập" }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Lỗi thiết lập sheet Xe:", error)
-    return { success: false, error: error.message || "Lỗi không xác định" }
+    return { success: false, error: error instanceof Error ? error.message : 'Lỗi không xác định' }
   }
 }
 
@@ -160,18 +160,22 @@ export async function getCarData() {
 
       console.log(`Tháng ${currentMonth}: tổng ${totalFuelLiters} lít, tổng chi phí ${totalFuelCost}`);
 
-      // Tính số ngày còn lại cho hạn đăng kiểm và bảo hiểm
-      const today = new Date()
-      const registrationDate = parseVietnameseDate(carData["Hạn đăng kiểm"] || "")
-      const insuranceDate = parseVietnameseDate(carData["Hạn bảo hiểm thân vỏ"] || "")
-
-      const registrationDaysLeft = registrationDate
-        ? Math.ceil((registrationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-        : 0
-
-      const insuranceDaysLeft = insuranceDate
-        ? Math.ceil((insuranceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-        : 0
+      // Tính toán số ngày còn lại đến hạn đăng kiểm và bảo hiểm
+      let registrationDaysLeft = 0;
+      let insuranceDaysLeft = 0;
+      
+      const registrationDate = parseVietnameseDate(carData["Hạn đăng kiểm"] || "");
+      const insuranceDate = parseVietnameseDate(carData["Hạn bảo hiểm thân vỏ"] || "");
+      
+      if (registrationDate) {
+        const timeDiff = registrationDate.getTime() - new Date().getTime();
+        registrationDaysLeft = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+      }
+      
+      if (insuranceDate) {
+        const timeDiff = insuranceDate.getTime() - new Date().getTime();
+        insuranceDaysLeft = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+      }
 
       // Cập nhật dữ liệu xăng từ giao dịch nếu có
       const syncedFuelMonth = totalFuelLiters > 0 ? totalFuelLiters : parseFloat(carData["Xăng đã đổ tháng này"] || "0") 
@@ -183,26 +187,35 @@ export async function getCarData() {
       const distance = endKm - startKm
       const actualEfficiency = distance > 0 && syncedFuelMonth > 0 ? (syncedFuelMonth / distance) * 100 : 0
 
+      const fuelEfficiency = parseFloat(carData["Tiêu hao nhiên liệu"] || "0")
+      const totalDistance = parseFloat(carData["Tổng quãng đường"] || "0")
+      const totalLiters = parseFloat(carData["Tổng số lít xăng đã đổ"] || "0")
+      const totalCost = parseFloat(carData["Tổng tiền xăng đã đổ"] || "0")
+      const registrationDateValue = carData["Hạn đăng kiểm"] || ""
+      const insuranceDateValue = carData["Hạn bảo hiểm thân vỏ"] || ""
+      const lastUpdated = carData["Cập nhật lần cuối"] || new Date().toISOString()
+      const startKmValue = parseFloat(carData["Km đầu tháng"] || "0")
+      const endKmValue = parseFloat(carData["Km cuối tháng"] || "0")
+      const totalFuelMonthValue = syncedFuelMonth
+      const fuelCostValue = syncedFuelCost
+
       return {
         success: true,
         carData: {
-          // Dữ liệu tổng thể
-          fuelEfficiency: parseFloat(carData["Tiêu hao nhiên liệu"] || "0"),
-          totalDistance: parseFloat(carData["Tổng quãng đường"] || "0"),
-          totalLiters: parseFloat(carData["Tổng số lít xăng đã đổ"] || "0"),
-          totalCost: parseFloat(carData["Tổng tiền xăng đã đổ"] || "0"),
-          registrationDate: carData["Hạn đăng kiểm"] || "",
+          fuelEfficiency,
+          totalDistance,
+          totalLiters,
+          totalCost,
+          registrationDate: registrationDateValue,
           registrationDaysLeft,
-          insuranceDate: carData["Hạn bảo hiểm thân vỏ"] || "",
+          insuranceDate: insuranceDateValue,
           insuranceDaysLeft,
-          lastUpdated: carData["Cập nhật lần cuối"] || new Date().toISOString(),
-          // Dữ liệu tháng
-          startKm: parseFloat(carData["Km đầu tháng"] || "0"),
-          endKm: parseFloat(carData["Km cuối tháng"] || "0"),
-          totalFuelMonth: syncedFuelMonth, // Synchronized with transactions
-          fuelCost: syncedFuelCost, // Synchronized with transactions
-          actualEfficiency: actualEfficiency,
-          // Transaction sync data for debugging
+          lastUpdated,
+          startKm: startKmValue,
+          endKm: endKmValue,
+          totalFuelMonth: totalFuelMonthValue,
+          fuelCost: fuelCostValue,
+          actualEfficiency,
           transactionSyncData: {
             totalFuelLiters,
             totalFuelCost,
@@ -210,34 +223,62 @@ export async function getCarData() {
           }
         },
       }
-    } catch (transactionError) {
+    } catch (transactionError: unknown) {
       console.error("Lỗi khi đồng bộ dữ liệu giao dịch:", transactionError);
       // Fallback to original data if transaction syncing fails
+      const fuelEfficiency = parseFloat(carData["Tiêu hao nhiên liệu"] || "0")
+      const totalDistance = parseFloat(carData["Tổng quãng đường"] || "0")
+      const totalLiters = parseFloat(carData["Tổng số lít xăng đã đổ"] || "0")
+      const totalCost = parseFloat(carData["Tổng tiền xăng đã đổ"] || "0")
+      const registrationDateValue = carData["Hạn đăng kiểm"] || ""
+      const insuranceDateValue = carData["Hạn bảo hiểm thân vỏ"] || ""
+      const lastUpdated = carData["Cập nhật lần cuối"] || new Date().toISOString()
+      const startKmValue = parseFloat(carData["Km đầu tháng"] || "0")
+      const endKmValue = parseFloat(carData["Km cuối tháng"] || "0")
+      const totalFuelMonthValue = parseFloat(carData["Xăng đã đổ tháng này"] || "0")
+      const fuelCostValue = parseFloat(carData["Chi phí xăng tháng này"] || "0")
+      
+      // Calculate registration and insurance days left here too
+      let registrationDaysLeftValue = 0;
+      let insuranceDaysLeftValue = 0;
+      
+      const registrationDateFallback = parseVietnameseDate(registrationDateValue);
+      const insuranceDateFallback = parseVietnameseDate(insuranceDateValue);
+      
+      if (registrationDateFallback) {
+        const timeDiff = registrationDateFallback.getTime() - new Date().getTime();
+        registrationDaysLeftValue = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+      }
+      
+      if (insuranceDateFallback) {
+        const timeDiff = insuranceDateFallback.getTime() - new Date().getTime();
+        insuranceDaysLeftValue = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+      }
+
       return {
         success: true,
         carData: {
-          fuelEfficiency: parseFloat(carData["Tiêu hao nhiên liệu"] || "0"),
-          totalDistance: parseFloat(carData["Tổng quãng đường"] || "0"),
-          totalLiters: parseFloat(carData["Tổng số lít xăng đã đổ"] || "0"),
-          totalCost: parseFloat(carData["Tổng tiền xăng đã đổ"] || "0"),
-          registrationDate: carData["Hạn đăng kiểm"] || "",
-          registrationDaysLeft,
-          insuranceDate: carData["Hạn bảo hiểm thân vỏ"] || "",
-          insuranceDaysLeft,
-          lastUpdated: carData["Cập nhật lần cuối"] || new Date().toISOString(),
-          // Monthly data
-          startKm: parseFloat(carData["Km đầu tháng"] || "0"),
-          endKm: parseFloat(carData["Km cuối tháng"] || "0"),
-          totalFuelMonth: parseFloat(carData["Xăng đã đổ tháng này"] || "0"),
-          fuelCost: parseFloat(carData["Chi phí xăng tháng này"] || "0"),
+          fuelEfficiency,
+          totalDistance,
+          totalLiters,
+          totalCost,
+          registrationDate: registrationDateValue,
+          registrationDaysLeft: registrationDaysLeftValue,
+          insuranceDate: insuranceDateValue,
+          insuranceDaysLeft: insuranceDaysLeftValue,
+          lastUpdated,
+          startKm: startKmValue,
+          endKm: endKmValue,
+          totalFuelMonth: totalFuelMonthValue,
+          fuelCost: fuelCostValue,
         },
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Lỗi khi lấy dữ liệu xe:", error)
     return {
       success: false,
-      error: error.message || "Lỗi không xác định khi lấy dữ liệu xe",
+      error: error instanceof Error ? error.message : 'Lỗi không xác định khi lấy dữ liệu xe',
     }
   }
 }
@@ -274,7 +315,7 @@ export async function updateCarData(formData: FormData) {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEET_NAME}!A1:B15`,
       valueInputOption: "RAW",
-      resource: {
+      requestBody: {
         values: [
           ["Thông số", "Giá trị"],
           ["Tiêu hao nhiên liệu", fuelEfficiency],
@@ -299,11 +340,11 @@ export async function updateCarData(formData: FormData) {
       success: true,
       message: "Dữ liệu xe đã được cập nhật thành công",
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Lỗi khi cập nhật dữ liệu xe:", error)
     return {
       success: false,
-      error: error.message || "Lỗi không xác định khi cập nhật dữ liệu xe",
+      error: error instanceof Error ? error.message : 'Lỗi không xác định khi cập nhật dữ liệu xe',
     }
   }
 }
