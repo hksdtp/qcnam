@@ -6,10 +6,16 @@ import type { ThemeProviderProps } from "next-themes/dist/types"
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   React.useEffect(() => {
-    // Thêm class 'light' vào thẻ html để đảm bảo CSS selector hoạt động đúng
+    // Luôn đảm bảo giao diện sáng, không cho phép dark mode
     document.documentElement.classList.add("light")
     document.documentElement.classList.remove("dark")
+    document.documentElement.style.colorScheme = "light"
   }, [])
 
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+  // Bắt buộc forcedTheme="light" và disable enableSystem
+  return (
+    <NextThemesProvider forcedTheme="light" enableSystem={false} attribute="class" {...props}>
+      {children}
+    </NextThemesProvider>
+  )
 }

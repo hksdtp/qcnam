@@ -24,12 +24,11 @@ export function CarManagement() {
     return new Intl.NumberFormat("vi-VN").format(amount)
   }
 
-  // Calculate monthly distance
+  // Calculate monthly distance - Directly from end - start KM
   const monthlyDistance = carData ? carData.endKm - carData.startKm : 0
 
-  // Calculate actual fuel efficiency for the month
-  const actualFuelEfficiency =
-    monthlyDistance > 0 && carData?.totalFuelMonth > 0 ? (carData.totalFuelMonth / monthlyDistance) * 100 : 0
+  // Use actual fuel efficiency calculated from API
+  const actualFuelEfficiency = carData?.actualEfficiency || 0
 
   if (isLoading) {
     return (
@@ -105,6 +104,42 @@ export function CarManagement() {
               </div>
             </div>
 
+            {/* Monthly fuel stats */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                  <DropletIcon className="h-3 w-3" />
+                  <span>Xăng đã đổ tháng này</span>
+                </div>
+                <div className="text-sm font-medium">{carData.totalFuelMonth.toFixed(1)} lít</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                  <BanknoteIcon className="h-3 w-3" />
+                  <span>Chi phí xăng tháng này</span>
+                </div>
+                <div className="text-sm font-medium">{formatCurrency(carData.fuelCost)} đ</div>
+              </div>
+            </div>
+
+            {/* Total distance and efficiency stats */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                  <CarIcon className="h-3 w-3" />
+                  <span>Tổng quãng đường</span>
+                </div>
+                <div className="text-sm font-medium">{formatCurrency(carData.totalDistance)} km</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                  <DropletIcon className="h-3 w-3" />
+                  <span>Tiêu hao trung bình</span>
+                </div>
+                <div className="text-sm font-medium">{carData.fuelEfficiency.toFixed(1)} lít/100km</div>
+              </div>
+            </div>
+
             {/* Odometer readings */}
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
@@ -121,44 +156,6 @@ export function CarManagement() {
                   <span>Km cuối tháng</span>
                 </div>
                 <div className="text-sm font-medium">{formatCurrency(carData.endKm)} km</div>
-              </div>
-            </div>
-
-            {/* Fuel stats */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <DropletIcon className="h-3 w-3" />
-                  <span>Xăng đã đổ tháng này</span>
-                </div>
-                <div className="text-sm font-medium">{carData.totalFuelMonth.toFixed(1)} lít</div>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <BanknoteIcon className="h-3 w-3" />
-                  <span>Chi phí xăng tháng này</span>
-                </div>
-                <div className="text-sm font-medium">{formatCurrency(carData.fuelCost)} đ</div>
-              </div>
-            </div>
-
-            {/* Overall stats */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <DropletIcon className="h-3 w-3" />
-                  <span>Tiêu hao trung bình</span>
-                </div>
-                <div className="text-sm font-medium">{carData.fuelEfficiency.toFixed(1)} lít/100km</div>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <CarIcon className="h-3 w-3" />
-                  <span>Tổng quãng đường</span>
-                </div>
-                <div className="text-sm font-medium">{formatCurrency(carData.totalDistance)} km</div>
               </div>
             </div>
 

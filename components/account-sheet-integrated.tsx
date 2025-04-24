@@ -6,11 +6,10 @@ import { Button } from "@/components/ui/button"
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useDate } from "@/lib/date-context"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatCurrency } from "@/lib/number-to-words"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface AccountData {
   currentBalance: number // Số dư hiện có
@@ -87,9 +86,10 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
       // Cập nhật state với dữ liệu từ API - CHÚ Ý: Dữ liệu nằm trong result.data, không phải result.accountData
       setAccountData(result.data)
       console.log("Dữ liệu tài khoản:", result.data)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Lỗi khi lấy dữ liệu số dư:", error)
-      setError(error.message || "Đã xảy ra lỗi khi lấy dữ liệu")
+      const errorMessage = error instanceof Error ? error.message : "Đã xảy ra lỗi khi lấy dữ liệu"
+      setError(errorMessage)
 
       // Trong trường hợp lỗi, hiển thị dữ liệu mẫu để kiểm tra giao diện
       setAccountData({
@@ -149,14 +149,15 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
 
       // Tải lại dữ liệu
       await fetchAccountData()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Lỗi khi đồng bộ dữ liệu tài khoản:", error)
-      setError(error.message || "Đã xảy ra lỗi khi đồng bộ dữ liệu")
+      const errorMessage = error instanceof Error ? error.message : "Đã xảy ra lỗi khi đồng bộ dữ liệu"
+      setError(errorMessage)
 
       // Hiển thị thông báo lỗi
       toast({
         title: "Đồng bộ thất bại",
-        description: error.message || "Đã xảy ra lỗi khi đồng bộ dữ liệu",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -210,70 +211,89 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
           <ChevronLeft className="h-5 w-5 text-gray-600" />
         </button>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <button className="flex flex-col items-center">
-              <div className="text-lg font-medium">Tháng {currentDate.getMonth() + 1}</div>
-              <div className="text-sm text-gray-500">{currentDate.getFullYear()}</div>
-            </button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md p-0 rounded-lg overflow-hidden">
-            <DialogHeader className="p-4 border-b flex justify-between items-center">
-              <DialogTitle className="text-xl">Chọn tháng và năm</DialogTitle>
-              <button onClick={() => setIsDialogOpen(false)} className="rounded-full p-1 hover:bg-gray-100">
-                <X className="h-5 w-5" />
-              </button>
-            </DialogHeader>
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Tháng</label>
-                  <Select
-                    value={selectedMonth.toString()}
-                    onValueChange={(value) => setSelectedMonth(Number.parseInt(value))}
-                  >
-                    <SelectTrigger className="w-full rounded-lg">
-                      <SelectValue placeholder="Tháng" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {monthNames.map((month, index) => (
-                        <SelectItem key={index} value={(index + 1).toString()}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Năm</label>
-                  <Select
-                    value={selectedYear.toString()}
-                    onValueChange={(value) => setSelectedYear(Number.parseInt(value))}
-                  >
-                    <SelectTrigger className="w-full rounded-lg">
-                      <SelectValue placeholder="Năm" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  onClick={applyDateSelection}
-                  className="bg-techcom-red text-white px-4 py-2 rounded-lg hover:bg-techcom-darkred"
+        {!isDialogOpen ? (
+          <button 
+            className="flex flex-col items-center"
+            onClick={() => {
+              setSelectedMonth(currentDate.getMonth() + 1);
+              setSelectedYear(currentDate.getFullYear());
+              setIsDialogOpen(true);
+            }}
+          >
+            <div className="text-lg font-medium">Tháng {currentDate.getMonth() + 1}</div>
+            <div className="text-sm text-gray-500">{currentDate.getFullYear()}</div>
+          </button>
+        ) : (
+          <div 
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+            onClick={() => setIsDialogOpen(false)}
+          >
+            <div 
+              className="bg-white w-[95%] max-w-[380px] rounded-lg overflow-hidden shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-4 py-3 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+                <h3 className="text-lg font-medium">Chọn tháng và năm</h3>
+                <button
+                  onClick={() => setIsDialogOpen(false)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100"
                 >
-                  Áp dụng
-                </Button>
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Đóng</span>
+                </button>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tháng</label>
+                    <Select
+                      value={selectedMonth.toString()}
+                      onValueChange={(value) => setSelectedMonth(Number.parseInt(value))}
+                    >
+                      <SelectTrigger className="w-full rounded-lg">
+                        <SelectValue placeholder="Tháng" />
+                      </SelectTrigger>
+                      <SelectContent position="popper" className="max-h-[300px]">
+                        {monthNames.map((month, index) => (
+                          <SelectItem key={index} value={(index + 1).toString()}>
+                            {month}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Năm</label>
+                    <Select
+                      value={selectedYear.toString()}
+                      onValueChange={(value) => setSelectedYear(Number.parseInt(value))}
+                    >
+                      <SelectTrigger className="w-full rounded-lg">
+                        <SelectValue placeholder="Năm" />
+                      </SelectTrigger>
+                      <SelectContent position="popper" className="max-h-[300px]">
+                        {years.map((year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={applyDateSelection}
+                    className="bg-techcom-red text-white px-4 py-2 rounded-lg hover:bg-techcom-darkred"
+                  >
+                    Áp dụng
+                  </Button>
+                </div>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
 
         <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100">
           <ChevronRight className="h-5 w-5 text-gray-600" />

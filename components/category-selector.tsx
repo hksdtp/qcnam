@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface CategorySelectorProps {
-  onCategoryChange?: (category: string) => void
+  onCategoryChange?: (category: string, subCategory?: string) => void
   className?: string
 }
 

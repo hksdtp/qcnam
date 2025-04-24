@@ -15,8 +15,10 @@ import {
   Calendar,
   Edit,
   MoreHorizontal,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { TransactionFormFixed } from "@/components/transaction-form-fixed"
 import { useDate } from "@/lib/date-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -28,12 +30,30 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { ReceiptViewer } from "@/components/receipt-viewer"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTransactions } from "@/lib/hooks"
 
 interface TransactionTabsFixedProps {
   transactions?: Transaction[]
   onAddTransaction?: (transaction: any) => void
+}
+
+// Helper: Format currency chỉ phía client
+function formatCurrency(amount: number) {
+  if (typeof window !== "undefined") {
+    return amount.toLocaleString("vi-VN") + " đ"
+  }
+  // SSR fallback
+  return amount + " đ"
+}
+
+// Helper: Format date chỉ phía client
+function formatDate(date: string) {
+  if (typeof window !== "undefined") {
+    // Nếu là ISO, chuyển sang dd/MM/yyyy
+    const d = new Date(date)
+    return d.toLocaleDateString("vi-VN")
+  }
+  return date
 }
 
 export function TransactionTabsFixed({
@@ -56,6 +76,8 @@ export function TransactionTabsFixed({
   const [editingTransaction, setEditingTransaction] = useState<(Transaction & { rowIndex?: number }) | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isManualRefresh, setIsManualRefresh] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [transactionToDelete, setTransactionToDelete] = useState<(Transaction & { rowIndex?: number }) | null>(null)
 
   // Sử dụng hook useTransactions
   const { transactions, isLoading, isError, errorMessage, mutate } = useTransactions(
@@ -176,19 +198,50 @@ export function TransactionTabsFixed({
     setIsEditDialogOpen(true)
   }
 
+  // Xử lý khi xóa giao dịch
+  const handleDeleteTransaction = async (transaction: Transaction & { rowIndex?: number }) => {
+    setTransactionToDelete(transaction);
+    setDeleteConfirmOpen(true);
+  };
+
+  // Thực hiện xóa giao dịch sau khi xác nhận
+  const confirmDelete = async () => {
+    if (!transactionToDelete) return;
+    
+    try {
+      const formData = new FormData();
+      formData.append("rowIndex", (transactionToDelete.rowIndex ?? "").toString());
+      // Gọi hàm xóa giao dịch từ actions
+      const result = await import("@/lib/actions").then(mod => mod.deleteTransaction(formData));
+      if (result.success) {
+        // Hiển thị thông báo thành công
+        console.log("Xóa giao dịch thành công", transactionToDelete);
+        // Tải lại dữ liệu
+        refreshData();
+      } else {
+        console.error("Lỗi khi xóa giao dịch:", result.error);
+      }
+    } catch (error: any) {
+      console.error("Lỗi khi xóa giao dịch:", error.message);
+    } finally {
+      setDeleteConfirmOpen(false);
+      setTransactionToDelete(null);
+    }
+  };
+
   // Lọc và nhóm giao dịch theo danh mục
-  const getFilteredTransactions = () => {
+  const getFilteredTransactions = (): Record<string, Transaction[]> => {
     const result: Record<string, Transaction[]> = {}
 
     if (activeTab === "expense") {
       // Lọc giao dịch chi tiêu
-      const expenseTransactions = transactions.filter((t) => t.type === "expense")
+      const expenseTransactions = transactions.filter((t: Transaction) => t.type === "expense")
 
       if (activeCategory === "total") {
         // Nhóm theo danh mục
         expenseCategories.slice(1).forEach((category) => {
           const categoryName = category.name
-          const categoryTransactions = expenseTransactions.filter((t) => t.category === categoryName)
+          const categoryTransactions = expenseTransactions.filter((t: Transaction) => t.category === categoryName)
 
           if (categoryTransactions.length > 0) {
             // Sắp xếp giao dịch theo thời gian mới nhất
@@ -202,12 +255,12 @@ export function TransactionTabsFixed({
       } else {
         // Lọc theo danh mục đã chọn
         const categoryName = expenseCategories.find((c) => c.id === activeCategory)?.name || ""
-        const categoryTransactions = expenseTransactions.filter((t) => t.category === categoryName)
+        const categoryTransactions = expenseTransactions.filter((t: Transaction) => t.category === categoryName)
 
         if (activeCategory === "car" && activeSubCategory !== "all") {
           // Lọc theo danh mục con
           const subCategoryName = carSubCategories.find((c) => c.id === activeSubCategory)?.name || ""
-          const filteredTransactions = categoryTransactions.filter((t) => t.subCategory === subCategoryName)
+          const filteredTransactions = categoryTransactions.filter((t: Transaction) => t.subCategory === subCategoryName)
 
           if (filteredTransactions.length > 0) {
             // Sắp xếp giao dịch theo thời gian mới nhất
@@ -228,13 +281,13 @@ export function TransactionTabsFixed({
       }
     } else {
       // Lọc giao dịch thu nhập
-      const incomeTransactions = transactions.filter((t) => t.type === "income")
+      const incomeTransactions = transactions.filter((t: Transaction) => t.type === "income")
 
       if (activeCategory === "total") {
         // Nhóm theo danh mục
         incomeCategories.slice(1).forEach((category) => {
           const categoryName = category.name
-          const categoryTransactions = incomeTransactions.filter((t) => t.category === categoryName)
+          const categoryTransactions = incomeTransactions.filter((t: Transaction) => t.category === categoryName)
 
           if (categoryTransactions.length > 0) {
             // Sắp xếp giao dịch theo thời gian mới nhất
@@ -248,7 +301,7 @@ export function TransactionTabsFixed({
       } else {
         // Lọc theo danh mục đã chọn
         const categoryName = incomeCategories.find((c) => c.id === activeCategory)?.name || ""
-        const categoryTransactions = incomeTransactions.filter((t) => t.category === categoryName)
+        const categoryTransactions = incomeTransactions.filter((t: Transaction) => t.category === categoryName)
 
         if (categoryTransactions.length > 0) {
           // Sắp xếp giao dịch theo thời gian mới nhất
@@ -279,7 +332,7 @@ export function TransactionTabsFixed({
   // Lấy tổng số giao dịch cho danh mục đã chọn
   const getFilteredTransactionsCount = () => {
     if (activeTab === "expense") {
-      const expenseTransactions = transactions.filter((t) => t.type === "expense")
+      const expenseTransactions = transactions.filter((t: Transaction) => t.type === "expense")
 
       if (activeCategory === "total") {
         return expenseTransactions.length
@@ -287,20 +340,20 @@ export function TransactionTabsFixed({
         const categoryName = "Chi phí xe ô tô"
         const subCategoryName = carSubCategories.find((c) => c.id === activeSubCategory)?.name || ""
 
-        return expenseTransactions.filter((t) => t.category === categoryName && t.subCategory === subCategoryName)
+        return expenseTransactions.filter((t: Transaction) => t.category === categoryName && t.subCategory === subCategoryName)
           .length
       } else {
         const categoryName = getCategoryNameFromId(activeCategory, true)
-        return expenseTransactions.filter((t) => t.category === categoryName).length
+        return expenseTransactions.filter((t: Transaction) => t.category === categoryName).length
       }
     } else {
-      const incomeTransactions = transactions.filter((t) => t.type === "income")
+      const incomeTransactions = transactions.filter((t: Transaction) => t.type === "income")
 
       if (activeCategory === "total") {
         return incomeTransactions.length
       } else {
         const categoryName = getCategoryNameFromId(activeCategory, false)
-        return incomeTransactions.filter((t) => t.category === categoryName).length
+        return incomeTransactions.filter((t: Transaction) => t.category === categoryName).length
       }
     }
   }
@@ -308,29 +361,29 @@ export function TransactionTabsFixed({
   // Lấy tổng tiền cho danh mục đã chọn
   const getTotalAmount = () => {
     if (activeTab === "expense") {
-      const expenseTransactions = transactions.filter((t) => t.type === "expense")
+      const expenseTransactions = transactions.filter((t: Transaction) => t.type === "expense")
 
       if (activeCategory === "total") {
-        return expenseTransactions.reduce((sum, t) => sum + t.amount, 0)
+        return expenseTransactions.reduce((sum, t: Transaction) => sum + t.amount, 0)
       } else if (activeCategory === "car" && activeSubCategory !== "all") {
         const categoryName = "Chi phí xe ô tô"
         const subCategoryName = carSubCategories.find((c) => c.id === activeSubCategory)?.name || ""
 
         return expenseTransactions
-          .filter((t) => t.category === categoryName && t.subCategory === subCategoryName)
-          .reduce((sum, t) => sum + t.amount, 0)
+          .filter((t: Transaction) => t.category === categoryName && t.subCategory === subCategoryName)
+          .reduce((sum, t: Transaction) => sum + t.amount, 0)
       } else {
         const categoryName = getCategoryNameFromId(activeCategory, true)
-        return expenseTransactions.filter((t) => t.category === categoryName).reduce((sum, t) => sum + t.amount, 0)
+        return expenseTransactions.filter((t: Transaction) => t.category === categoryName).reduce((sum, t: Transaction) => sum + t.amount, 0)
       }
     } else {
-      const incomeTransactions = transactions.filter((t) => t.type === "income")
+      const incomeTransactions = transactions.filter((t: Transaction) => t.type === "income")
 
       if (activeCategory === "total") {
-        return incomeTransactions.reduce((sum, t) => sum + t.amount, 0)
+        return incomeTransactions.reduce((sum, t: Transaction) => sum + t.amount, 0)
       } else {
         const categoryName = getCategoryNameFromId(activeCategory, false)
-        return incomeTransactions.filter((t) => t.category === categoryName).reduce((sum, t) => sum + t.amount, 0)
+        return incomeTransactions.filter((t: Transaction) => t.category === categoryName).reduce((sum, t: Transaction) => sum + t.amount, 0)
       }
     }
   }
@@ -430,7 +483,7 @@ export function TransactionTabsFixed({
             </div>
 
             <CategorySelector
-              onCategoryChange={(mainCategory, subCategory) => {
+              onCategoryChange={(mainCategory: string, subCategory?: string) => {
                 // Ánh xạ từ ID danh mục sang tên danh mục
                 const categoryMap: Record<string, string> = {
                   tong: "total",
@@ -476,7 +529,7 @@ export function TransactionTabsFixed({
                     <p className="text-sm text-gray-500">{filteredTransactionsCount} giao dịch</p>
                   </div>
                   <div className="text-xl font-bold text-techcom-red">
-                    {new Intl.NumberFormat("vi-VN").format(totalAmount)} đ
+                    {formatCurrency(totalAmount)}
                   </div>
                 </div>
               </div>
@@ -513,10 +566,9 @@ export function TransactionTabsFixed({
                             </div>
                             <div className="flex items-center">
                               <span className="font-medium text-techcom-red mr-2">
-                                {new Intl.NumberFormat("vi-VN").format(
+                                {formatCurrency(
                                   categoryTransactions.reduce((sum, t) => sum + t.amount, 0),
-                                )}{" "}
-                                đ
+                                )}
                               </span>
                               {expandedCategory === category ? (
                                 <ChevronUp className="h-4 w-4 text-gray-500" />
@@ -546,38 +598,33 @@ export function TransactionTabsFixed({
                                     </Badge>
                                   )}
                                 </div>
-                                <p className="text-xs text-gray-500 text-left mt-1">{transaction.date}</p>
+                                <p className="text-xs text-gray-500 text-left mt-1">{formatDate(transaction.date)}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 {transaction.receiptLink && (
                                   <ReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
                                 )}
                                 <div className="text-techcom-red font-medium">
-                                  {transaction.amount.toLocaleString("vi-VN")} đ
+                                  {formatCurrency(transaction.amount)}
                                 </div>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-100"
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="end"
-                                    className="animate-in fade-in-80 slide-in-from-top-5"
+                                <div className="flex space-x-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-100"
+                                    onClick={() => handleEditTransaction({ ...transaction, rowIndex: index })}
                                   >
-                                    <DropdownMenuItem
-                                      onClick={() => handleEditTransaction(transaction, Number(transaction.id) + 2)}
-                                      className="cursor-pointer transition-colors duration-200"
-                                    >
-                                      <Edit className="mr-2 h-4 w-4" />
-                                      Chỉnh sửa
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-100 text-red-600"
+                                    onClick={() => handleDeleteTransaction({ ...transaction, rowIndex: index })}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -650,7 +697,7 @@ export function TransactionTabsFixed({
                     <p className="text-sm text-gray-500">{filteredTransactionsCount} giao dịch</p>
                   </div>
                   <div className="text-xl font-bold text-green-600">
-                    {new Intl.NumberFormat("vi-VN").format(totalAmount)} đ
+                    {formatCurrency(totalAmount)}
                   </div>
                 </div>
               </div>
@@ -687,10 +734,9 @@ export function TransactionTabsFixed({
                             </div>
                             <div className="flex items-center">
                               <span className="font-medium text-green-600 mr-2">
-                                {new Intl.NumberFormat("vi-VN").format(
+                                {formatCurrency(
                                   categoryTransactions.reduce((sum, t) => sum + t.amount, 0),
-                                )}{" "}
-                                đ
+                                )}
                               </span>
                               {expandedCategory === category ? (
                                 <ChevronUp className="h-4 w-4 text-gray-500" />
@@ -712,38 +758,33 @@ export function TransactionTabsFixed({
                             >
                               <div className="flex-1">
                                 <p className="font-medium text-left">{transaction.description}</p>
-                                <p className="text-xs text-gray-500 text-left mt-1">{transaction.date}</p>
+                                <p className="text-xs text-gray-500 text-left mt-1">{formatDate(transaction.date)}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 {transaction.receiptLink && (
                                   <ReceiptViewer receiptLink={transaction.receiptLink} size="sm" />
                                 )}
                                 <div className="text-green-600 font-medium">
-                                  {transaction.amount.toLocaleString("vi-VN")} đ
+                                  {formatCurrency(transaction.amount)}
                                 </div>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-100"
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="end"
-                                    className="animate-in fade-in-80 slide-in-from-top-5"
+                                <div className="flex space-x-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-100"
+                                    onClick={() => handleEditTransaction({ ...transaction, rowIndex: index })}
                                   >
-                                    <DropdownMenuItem
-                                      onClick={() => handleEditTransaction(transaction, Number(transaction.id) + 2)}
-                                      className="cursor-pointer transition-colors duration-200"
-                                    >
-                                      <Edit className="mr-2 h-4 w-4" />
-                                      Chỉnh sửa
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-100 text-red-600"
+                                    onClick={() => handleDeleteTransaction({ ...transaction, rowIndex: index })}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -859,6 +900,46 @@ export function TransactionTabsFixed({
             currentDate={currentDate}
             initialType={activeTab}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog xác nhận xóa giao dịch */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-red-600">
+              <AlertTriangle className="mr-2 h-5 w-5" />
+              Xác nhận xóa giao dịch
+            </DialogTitle>
+            <DialogDescription className="pt-3">
+              Bạn có chắc chắn muốn xóa giao dịch này không? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          {transactionToDelete && (
+            <div className="bg-gray-50 p-3 rounded-lg my-3">
+              <div className="font-medium">{transactionToDelete.description}</div>
+              <div className="flex justify-between mt-1">
+                <div className="text-sm text-gray-500">{formatDate(transactionToDelete.date)}</div>
+                <div className="font-medium text-red-600">{formatCurrency(transactionToDelete.amount)}</div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="sm:justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              className="gap-1"
+            >
+              <Trash2 className="h-4 w-4" />
+              Xóa giao dịch
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>

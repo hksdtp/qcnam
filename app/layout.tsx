@@ -2,6 +2,7 @@ import type React from "react"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import ClientLayout from "./client-layout"
+import { TestDropdown } from "@/components/test-dropdown"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,6 +30,14 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className={inter.className}>
+        {/* Đã tạm thởi vô hiệu hóa TestDropdown để xác định nguyên nhân lỗi */}
+        {/*
+        {process.env.NODE_ENV !== "production" && (
+          <div style={{ position: "fixed", top: 10, right: 10, zIndex: 9999 }}>
+            <TestDropdown />
+          </div>
+        )}
+        */}
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

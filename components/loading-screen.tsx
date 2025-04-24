@@ -20,47 +20,24 @@ export function LoadingScreen({
   const [isRemoved, setIsRemoved] = useState(false)
 
   useEffect(() => {
-    // Lắng nghe sự kiện khi animation 'wipe-effect' kết thúc
-    const wipeOverlay = document.querySelector(`.${styles.wipeOverlay}`)
-
-    const handleAnimationEnd = () => {
+    // Đặt hẹn giờ ngay lập tức để đảm bảo màn hình loading sẽ tắt
+    const immediateTimer = setTimeout(() => {
       // Thêm class 'hidden' để bắt đầu hiệu ứng fade-out
-      setIsHidden(true)
-
+      setIsHidden(true);
+      
       // Sau khi hiệu ứng fade-out kết thúc, ẩn hẳn loading screen
       setTimeout(() => {
-        setIsRemoved(true)
+        setIsRemoved(true);
         if (onLoadingComplete) {
-          onLoadingComplete()
+          onLoadingComplete();
         }
-      }, 1000) // Increased from 600ms to 1000ms
-    }
-
-    if (wipeOverlay) {
-      wipeOverlay.addEventListener("animationend", handleAnimationEnd)
-    }
-
-    // Fallback: Nếu có lỗi gì đó với event 'animationend',
-    // vẫn ẩn loading screen sau một khoảng thời gian tổng
-    const fallbackTimer = setTimeout(() => {
-      if (!isHidden) {
-        setIsHidden(true)
-        setTimeout(() => {
-          setIsRemoved(true)
-          if (onLoadingComplete) {
-            onLoadingComplete()
-          }
-        }, 1000) // Increased from 600ms to 1000ms
-      }
-    }, 7000) // Increased from 4500ms to 7000ms to account for much longer animation sequence
-
+      }, 800);
+    }, 1500); // Hiển thị loading screen trong 1.5 giây rồi tắt
+    
     return () => {
-      if (wipeOverlay) {
-        wipeOverlay.removeEventListener("animationend", handleAnimationEnd)
-      }
-      clearTimeout(fallbackTimer)
-    }
-  }, [isHidden, onLoadingComplete])
+      clearTimeout(immediateTimer);
+    };
+  }, [onLoadingComplete]);
 
   if (isRemoved) {
     return null

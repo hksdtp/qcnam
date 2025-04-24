@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { TransactionFormFixed } from "@/components/transaction-form-fixed"
 import { addTransaction } from "@/lib/actions"
 import { useToast } from "@/components/ui/use-toast"
@@ -29,9 +28,11 @@ export function AddTransactionDialog({
 
   // Get mutate functions to refresh data after adding a transaction
   const { mutate: mutateTransactions } = useTransactions(month, year)
-  const { mutate: mutateAccountData } = useAccountData(month, year)
-  const { mutate: mutateCarData } = useCarData(month, year)
-  const { mutate: mutateSummary } = useTransactionSummary()
+  
+  // Type assertion to add mutate property - these hooks actually return mutate from SWR
+  const accountData = useAccountData(month, year) as { mutate: () => void; accountData: any; isLoading: boolean; isError: boolean; errorMessage: any }
+  const carData = useCarData(month, year) as { mutate: () => void; carData: any; isLoading: boolean; isError: boolean; errorMessage: any }
+  const summary = useTransactionSummary() as { mutate: () => void; summary: any; isLoading: boolean; isError: boolean; errorMessage: any }
 
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true)
@@ -53,9 +54,9 @@ export function AddTransactionDialog({
 
         // Refresh all data
         mutateTransactions()
-        mutateAccountData()
-        mutateCarData()
-        mutateSummary()
+        accountData.mutate()
+        carData.mutate()
+        summary.mutate()
 
         // Call onAddTransaction callback if provided
         if (onAddTransaction && result.transaction) {
@@ -68,10 +69,11 @@ export function AddTransactionDialog({
           variant: "destructive",
         })
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định"
       toast({
         title: "Lỗi khi thêm giao dịch",
-        description: error.message || "Đã xảy ra lỗi không xác định",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -85,52 +87,41 @@ export function AddTransactionDialog({
     }
   }
 
+  // Cách cải tiến: sử dụng giải pháp native dialog thay vì Radix UI Dialog
+  if (typeof window !== "undefined") {
+    if (open) {
+      document.body.style.overflow = "hidden"; // Ngăn scroll trên body
+    } else {
+      document.body.style.overflow = "auto"; // Cho phép scroll lại
+    }
+  }
+
+  if (!open) return null;
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(newOpen) => {
-        // Không cho phép đóng dialog khi nhấn ra ngoài
-        if (!newOpen && !isSubmitting) {
-          // Chỉ cho phép đóng khi không đang submit
-          onOpenChange(newOpen)
-        }
-      }}
+    <div 
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+      onClick={() => !isSubmitting && onOpenChange(false)}
     >
-      <DialogContent
-        className="sm:max-w-[380px] p-0 overflow-hidden bg-white"
-        style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          maxHeight: "90vh",
-          width: "95%",
-          zIndex: 50,
-        }}
-        onInteractOutside={(e) => {
-          // Ngăn chặn đóng dialog khi nhấn ra ngoài
-          e.preventDefault()
-        }}
-        onEscapeKeyDown={(e) => {
-          // Ngăn chặn đóng dialog khi nhấn ESC
-          e.preventDefault()
-        }}
+      <div 
+        className="bg-white w-[95%] max-w-[380px] rounded-lg overflow-hidden shadow-lg"
+        style={{ maxHeight: "80vh" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <DialogHeader className="px-4 py-3 border-b flex flex-row justify-between items-center sticky top-0 bg-white z-10">
-          <DialogTitle className="text-lg font-medium">Thêm giao dịch mới</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full hover:bg-gray-100"
+        <div className="px-4 py-3 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+          <h3 className="text-lg font-medium">Thêm giao dịch mới</h3>
+          <button
             onClick={handleCancel}
             disabled={isSubmitting}
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Đóng</span>
-          </Button>
-        </DialogHeader>
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(90vh - 60px)" }}>
-          <div className="p-4 bg-white">
+          </button>
+        </div>
+        
+        <div className="overflow-auto" style={{ maxHeight: "calc(80vh - 57px)" }}>
+          <div className="p-4">
             <TransactionFormFixed
               onSuccess={() => onOpenChange(false)}
               onSubmit={handleSubmit}
@@ -140,7 +131,7 @@ export function AddTransactionDialog({
             />
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  )
+      </div>
+    </div>
+  );
 }

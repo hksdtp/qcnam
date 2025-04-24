@@ -13,9 +13,7 @@ const nextConfig = {
     return config;
   },
   // Đảm bảo các API routes chạy trong Node.js runtime, không phải Edge
-  experimental: {
-    serverComponentsExternalPackages: ['googleapis'],
-  },
+  serverExternalPackages: ['googleapis'],
   // Thêm các cấu hình mới để bỏ qua lỗi trong quá trình build
   eslint: {
     ignoreDuringBuilds: true,
