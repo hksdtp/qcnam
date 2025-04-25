@@ -100,24 +100,26 @@ export function AddTransactionDialog({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+      className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-50 flex items-start justify-center backdrop-blur"
       onClick={() => !isSubmitting && onOpenChange(false)}
     >
       <div 
-        className="bg-white w-[95%] max-w-[380px] rounded-lg overflow-hidden shadow-lg"
+        className="bg-white w-[95%] max-w-[380px] rounded-xl overflow-hidden shadow-xl mt-16 animate-in fade-in-50 zoom-in-95 duration-200 border border-gray-200 ios-card-effect"
         style={{ maxHeight: "80vh" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b flex justify-between items-center bg-white sticky top-0 z-10">
           <h3 className="text-lg font-medium">Thêm giao dịch mới</h3>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100"
+            className="h-8 w-8 rounded-full hover:bg-gray-100"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Đóng</span>
-          </button>
+          </Button>
         </div>
         
         <div className="overflow-auto" style={{ maxHeight: "calc(80vh - 57px)" }}>

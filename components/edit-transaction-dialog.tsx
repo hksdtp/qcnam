@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal, DialogOverlay } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { editTransaction } from "@/lib/actions"
@@ -53,11 +53,11 @@ export function EditTransactionDialog({ transaction, open, onOpenChange, onSucce
           variant: "destructive",
         })
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error editing transaction:", error)
       toast({
         title: "Lỗi khi cập nhật giao dịch",
-        description: error.message || "Đã xảy ra lỗi không xác định",
+        description: error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định",
         variant: "destructive",
       })
     } finally {
@@ -81,38 +81,33 @@ export function EditTransactionDialog({ transaction, open, onOpenChange, onSucce
         }
       }}
     >
-      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
-        <DialogHeader className="px-4 py-3 border-b flex flex-row justify-between items-center sticky top-0 bg-white z-10">
-          <DialogTitle className="text-lg font-medium">Chỉnh sửa giao dịch</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full hover:bg-gray-100"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Đóng</span>
-          </Button>
-        </DialogHeader>
-        <div className="p-4">
-          <TransactionFormFixed
-            initialType={transaction.type}
-            initialValues={{
-              date: transaction.date,
-              category: transaction.category,
-              description: transaction.description,
-              amount: transaction.amount.toString(),
-              subCategory: transaction.subCategory || "",
-              fuelLiters: transaction.fuelLiters || "",
-              paymentMethod: transaction.paymentMethod || "transfer",
-            }}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            onCancel={handleCancel}
-          />
-        </div>
-      </DialogContent>
+      <DialogPortal>
+        <DialogOverlay className="bg-black/30 backdrop-blur-[2px] animate-in fade-in-50 duration-100 backdrop-blur" />
+        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden fixed left-[50%] top-16 translate-x-[-50%] rounded-xl border border-gray-200 bg-white shadow-xl animate-in fade-in-50 zoom-in-95 duration-200 sm:w-full max-h-[80vh] data-[state=open]:animate-in data-[state=closed]:animate-out dialog-content ios-card-effect">
+          <DialogHeader className="px-4 py-3 border-b flex flex-row justify-between items-center sticky top-0 bg-white z-10">
+            <DialogTitle className="text-lg font-medium">Chỉnh sửa giao dịch</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full hover:bg-gray-100"
+              onClick={handleCancel}
+              disabled={isSubmitting}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Đóng</span>
+            </Button>
+          </DialogHeader>
+          <div className="p-4">
+            <TransactionFormFixed
+              initialType={transaction.type}
+              existingTransaction={transaction}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+              onCancel={handleCancel}
+            />
+          </div>
+        </DialogContent>
+      </DialogPortal>
     </Dialog>
   )
 }

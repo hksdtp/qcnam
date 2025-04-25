@@ -2,19 +2,27 @@
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
-import type { ThemeProviderProps } from "next-themes/dist/types"
+import type { ThemeProviderProps } from "next-themes"
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  const [mounted, setMounted] = React.useState(false)
+
+  // Chỉ thực hiện các thay đổi DOM sau khi component đã mount
+  // để tránh hydration mismatch
   React.useEffect(() => {
-    // Luôn đảm bảo giao diện sáng, không cho phép dark mode
-    document.documentElement.classList.add("light")
-    document.documentElement.classList.remove("dark")
-    document.documentElement.style.colorScheme = "light"
+    setMounted(true)
   }, [])
 
   // Bắt buộc forcedTheme="light" và disable enableSystem
+  // Bỏ các thuộc tính có thể gây ra hydration mismatch
   return (
-    <NextThemesProvider forcedTheme="light" enableSystem={false} attribute="class" {...props}>
+    <NextThemesProvider 
+      forcedTheme="light" 
+      enableSystem={false} 
+      attribute="class" 
+      defaultTheme="light"
+      {...props}
+    >
       {children}
     </NextThemesProvider>
   )

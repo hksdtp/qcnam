@@ -1,0 +1,230 @@
+/* iOS-like smooth scrolling styles */
+.ios-scroll-container {
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  
+  /* Other properties */
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+/* Hide default scrollbar for WebKit browsers */
+.ios-scroll-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Style the scrollbar thumb for WebKit browsers */
+.ios-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 2px solid #fff;
+}
+
+/* Style the scrollbar track for WebKit browsers */
+.ios-scroll-container::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* Style for Firefox */
+.ios-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* Animation for elements when scrolling */
+.ios-scroll-container > * {
+  transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1), 
+              opacity 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: transform, opacity;
+}
+
+/* Elastic overscroll effect - simulates iOS bounce effect */
+.ios-scroll-container:active {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05));
+}
+
+/* Make touch interactions feel more responsive */
+@media (pointer: coarse) {
+  .ios-scroll-container {
+    scroll-snap-type: y proximity;
+  }
+  
+  /* Subtle scale effect for cards when scrolling */
+  .ios-scroll-container > div {
+    scroll-snap-align: start;
+    transform-origin: center center;
+  }
+}
+
+/* Add subtle parallax to cards when scrolling */
+@supports (transform-style: preserve-3d) {
+  .ios-scroll-container > div {
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+}
+
+/* iOS-like scrolling */
+.ios-scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: none;
+  will-change: transform;
+  padding-right: 4px;
+}
+
+.ios-scroll-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ios-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px;
+}
+
+.ios-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  border: 2px solid transparent;
+}
+
+.ios-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+/* Improve momentum scrolling for iOS/macOS feel */
+@supports (-webkit-overflow-scrolling: touch) {
+  .ios-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+}
+
+/* For modern browsers - subtle elastic effect */
+@supports (overflow-y: overlay) {
+  .ios-scroll-container {
+    overflow-y: overlay;
+  }
+}
+
+/* Smooth transition when elements appear during scrolling */
+.ios-scroll-container > * {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Animation when scroll position reaches top or bottom */
+@keyframes bounce-top {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+
+@keyframes bounce-bottom {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Subtle fade for items at top and bottom of scroll container */
+.ios-scroll-container {
+  mask-image: linear-gradient(to bottom, 
+    transparent 0%, 
+    black 5%, 
+    black 95%, 
+    transparent 100%);
+}
+
+/* iOS/macOS style animations and effects */
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Dialog animations */
+[data-state=open].dialog-content {
+  animation: fade-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-state=closed].dialog-content {
+  animation: fade-out 0.2s ease-out;
+}
+
+/* Backdrop blur effect */
+.backdrop-blur {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Button and interactive element animations */
+.ios-button-effect {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.2s ease;
+}
+
+.ios-button-effect:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.ios-button-effect:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* Card hover effects */
+.ios-card-effect {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.3s ease;
+}
+
+.ios-card-effect:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Menu/dropdown animation */
+@keyframes scale-in {
+  from { transform: scale(0.95); opacity: 0; transform-origin: top; }
+  to { transform: scale(1); opacity: 1; transform-origin: top; }
+}
+
+.ios-menu-animation {
+  animation: scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: top;
+}
+
+/* Tab transition effects */
+.ios-tab-transition {
+  transition: background 0.3s ease, transform 0.3s ease, color 0.3s ease;
+}
+
+/* Subtle list item hover effect */
+.ios-list-item {
+  transition: background-color 0.2s ease;
+}
+
+.ios-list-item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Input focus animation */
+.ios-input-effect {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ios-input-effect:focus {
+  border-color: rgba(0, 122, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.25);
+}

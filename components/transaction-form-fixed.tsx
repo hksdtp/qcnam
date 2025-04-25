@@ -5,7 +5,6 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from "@/components/ui/select"
 import { Upload, FileType, AlertCircle, Loader2, X } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { addTransaction } from "@/lib/actions"
@@ -67,7 +66,7 @@ export function TransactionFormFixed({
   const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [description, setDescription] = useState<string>(existingTransaction?.description || "")
   const [amount, setAmount] = useState<string>(existingTransaction?.amount ? formatCurrency(existingTransaction.amount) : "")
-  const [paymentMethod, setPaymentMethod] = useState<string>(existingTransaction?.paymentMethod || "")
+  const [paymentMethod, setPaymentMethod] = useState<string>(existingTransaction?.paymentMethod || "Chuyển khoản")
   const [date, setDate] = useState<Date>(existingTransaction?.date ? new Date(existingTransaction.date) : new Date())
   const [note, setNote] = useState<string>(existingTransaction?.note || "")
   const [image, setImage] = useState<string>(existingTransaction?.image || "")
@@ -84,6 +83,37 @@ export function TransactionFormFixed({
   
   // Thêm state để kiểm soát hiển thị của category dropdown
   const [isSelectOpen, setIsSelectOpen] = useState(false)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+  const categoryDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Thêm state để kiểm soát hiển thị của dropdown danh mục con
+  const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false)
+  const subCategoryDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Hook để đóng dropdown khi click bên ngoài
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (subCategoryDropdownRef.current && !subCategoryDropdownRef.current.contains(event.target as Node)) {
+        setShowSubCategoryDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const { toast } = useToast()
   const formData = useRef(new FormData())
@@ -110,28 +140,73 @@ export function TransactionFormFixed({
   // Khởi tạo giá trị cho form khi có existingTransaction
   useEffect(() => {
     if (existingTransaction) {
-      setType(existingTransaction.type as "expense" | "income")
-      setSelectedCategory(existingTransaction.category || "")
-      setDescription(existingTransaction.description || "")
-      setAmount(existingTransaction.amount ? formatCurrency(existingTransaction.amount) : "")
-      setPaymentMethod(existingTransaction.paymentMethod || "")
-      setDate(existingTransaction.date ? new Date(existingTransaction.date) : new Date())
-      setNote(existingTransaction.note || "")
-      setImage(existingTransaction.image || "")
-      setPreviewUrl(existingTransaction.image || null)
-      setFuelLiters(existingTransaction.fuelLiters ? String(existingTransaction.fuelLiters) : "")
+      console.log("Initializing form with existing transaction:", existingTransaction);
       
-      // Cập nhật subCategories dựa vào category
-      if (existingTransaction.category) {
-        const category = existingTransaction.category
-        updateSubCategories(category)
-        // Kiểm tra xem có phải là chi phi xăng xe không
-        checkIsCarFuelCategory(category, existingTransaction.subCategory || "")
+      // Đặt type trước
+      setType(existingTransaction.type as "expense" | "income");
+      
+      // Danh mục và danh mục con cần xử lý cùng nhau để tránh mất đồng bộ
+      const category = existingTransaction.category || "";
+      const subCategory = existingTransaction.subCategory || "";
+      
+      // Lưu trữ tạm thởi giá trị để sử dụng sau
+      const storedCategory = category;
+      const storedSubCategory = subCategory;
+      
+      // Đặt category trước
+      setSelectedCategory(category);
+      
+      // Cập nhật danh sách danh mục con dựa trên category
+      if (category) {
+        // Tìm danh sách danh mục dựa trên loại giao dịch
+        const categories = existingTransaction.type === "expense" ? ExpenseCategories : IncomeCategories;
+        const foundCategory = categories.find(c => c.name === category);
+        
+        // Nếu tìm thấy, sử dụng danh sách con của nó
+        if (foundCategory && foundCategory.subCategories) {
+          setSubCategories(foundCategory.subCategories);
+          
+          // Đảm bảo danh mục con được đặt NGAY SAU KHI danh sách con được cập nhật
+          setSelectedSubCategory(subCategory);
+        } else {
+          // Nếu không tìm thấy danh mục, xóa danh sách con
+          setSubCategories([]);
+          setSelectedSubCategory("");
+        }
+        
+        // Kiểm tra có phải chi phí xăng xe không
+        checkIsCarFuelCategory(category, subCategory);
       }
       
-      setSelectedSubCategory(existingTransaction.subCategory || "")
+      // Kiểm tra lại sau một khoảng thời gian ngắn để đảm bảo giá trị được đặt đúng
+      setTimeout(() => {
+        if (selectedCategory !== storedCategory) {
+          console.log("Fixing category:", storedCategory);
+          setSelectedCategory(storedCategory);
+        }
+        
+        if (selectedSubCategory !== storedSubCategory && storedSubCategory) {
+          console.log("Fixing subcategory:", storedSubCategory);
+          setSelectedSubCategory(storedSubCategory);
+        }
+      }, 50);
+      
+      // Khởi tạo các giá trị khác
+      setDescription(existingTransaction.description || "");
+      setAmount(existingTransaction.amount ? formatCurrency(existingTransaction.amount) : "");
+      
+      // Đảm bảo paymentMethod được đặt đúng
+      const paymentMethodValue = existingTransaction.paymentMethod || "Chuyển khoản";
+      console.log("Setting payment method to:", paymentMethodValue);
+      setPaymentMethod(paymentMethodValue);
+      
+      setDate(existingTransaction.date ? new Date(existingTransaction.date) : new Date());
+      setNote(existingTransaction.note || "");
+      setImage(existingTransaction.image || "");
+      setPreviewUrl(existingTransaction.image || null);
+      setFuelLiters(existingTransaction.fuelLiters ? String(existingTransaction.fuelLiters) : "");
     }
-  }, [existingTransaction])
+  }, [existingTransaction]);
 
   const updateSubCategories = (category: string) => {
     if (!category) {
@@ -189,22 +264,21 @@ export function TransactionFormFixed({
       // Định dạng lại giá trị với dấu chấm cho hàng nghìn
       if (normalizedValue === "") {
         setAmount("")
+        setShowAmountSuggestions(false)
       } else {
         // Chuyển đổi sang số và định dạng
         const numericValue = parseFloat(normalizedValue)
         if (!isNaN(numericValue)) {
           setAmount(formatCurrency(numericValue))
+          
+          // Hiển thị gợi ý nếu chỉ nhập một chữ số
+          if (normalizedValue.length === 1) {
+            suggestAmounts(parseInt(normalizedValue))
+          } else {
+            setShowAmountSuggestions(false)
+          }
         }
       }
-    }
-    
-    // Gợi ý số tiền nếu đang nhập
-    if (value.length === 1) {
-      suggestAmounts(parseInt(value))
-    } else if (value.length < 1) {
-      setShowAmountSuggestions(false)
-    } else {
-      setShowAmountSuggestions(false)
     }
   }
 
@@ -419,32 +493,28 @@ export function TransactionFormFixed({
         onValueChange={(value) => setType(value as "expense" | "income")}
         className="mb-4"
       >
-        <div className="grid grid-cols-2 gap-2">
-          <TabsList className="w-full bg-gradient-to-r from-gray-100 to-gray-50 p-1 rounded-lg shadow-sm">
-            <TabsTrigger 
-              value="expense" 
-              className={`w-full rounded-md transition-all duration-300 ${
-                type === 'expense' 
-                  ? 'bg-gradient-to-r from-red-500 to-red-600 text-white font-medium shadow-md transform scale-105' 
-                  : 'bg-gradient-to-r from-red-400 to-red-300 text-white font-medium hover:from-red-500 hover:to-red-400'
-              }`}
-            >
-              Chi
-            </TabsTrigger>
-          </TabsList>
-          <TabsList className="w-full bg-gradient-to-r from-gray-100 to-gray-50 p-1 rounded-lg shadow-sm">
-            <TabsTrigger 
-              value="income" 
-              className={`w-full rounded-md transition-all duration-300 ${
-                type === 'income' 
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium shadow-md transform scale-105' 
-                  : 'bg-gradient-to-r from-blue-400 to-blue-300 text-white font-medium hover:from-blue-500 hover:to-blue-400'
-              }`}
-            >
-              Thu
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="w-full bg-gradient-to-r from-gray-50 to-gray-100 p-2 rounded-lg shadow-sm grid grid-cols-2 gap-3">
+          <TabsTrigger 
+            value="expense" 
+            className={`transition-all duration-300 rounded-md ${
+              type === 'expense' 
+                ? 'bg-gradient-to-r from-rose-500 to-red-500 text-white font-medium shadow-md hover:shadow-red-100 transform scale-100' 
+                : 'bg-gradient-to-r from-rose-400 to-red-400 text-white font-medium hover:from-rose-500 hover:to-red-500 hover:shadow-sm'
+            }`}
+          >
+            Tiền ra
+          </TabsTrigger>
+          <TabsTrigger 
+            value="income" 
+            className={`transition-all duration-300 rounded-md ${
+              type === 'income' 
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium shadow-md hover:shadow-teal-100 transform scale-100' 
+                : 'bg-gradient-to-r from-emerald-400 to-teal-400 text-white font-medium hover:from-emerald-500 hover:to-teal-500 hover:shadow-sm'
+            }`}
+          >
+            Tiền vào
+          </TabsTrigger>
+        </TabsList>
         
         <form ref={formRef} onSubmit={handleSubmitForm} className="mt-4 space-y-4">
           {/* Danh mục */}
@@ -458,32 +528,44 @@ export function TransactionFormFixed({
               )}
             </div>
             
-            <Select
-              value={selectedCategory}
-              onValueChange={handleCategoryChange}
-              onOpenChange={setIsSelectOpen}
-            >
-              <SelectTrigger id="category" aria-label="Chọn danh mục">
-                <SelectValue placeholder="Chọn danh mục" />
-              </SelectTrigger>
-              <SelectContent className={`max-h-[200px] overflow-y-auto ${isSelectOpen ? 'z-[9999]' : ''}`}>
-                <SelectGroup>
-                  {type === "expense" ? (
-                    ExpenseCategories.map((category) => (
-                      <SelectItem key={category.name} value={category.name}>
-                        {category.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    IncomeCategories.map((category) => (
-                      <SelectItem key={category.name} value={category.name}>
-                        {category.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <div className="relative" ref={categoryDropdownRef}>
+              <div 
+                className={`flex h-9 items-center justify-between px-3 py-2 text-sm rounded-lg border border-gray-100 bg-white shadow-sm cursor-pointer transition-all duration-200 ${errors.category ? 'border-red-300' : 'hover:border-gray-200 hover:shadow'}`}
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              >
+                <span className="text-gray-700 font-medium">
+                  {selectedCategory || "Chọn danh mục"}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-40">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+              
+              {/* Custom dropdown panel */}
+              {showCategoryDropdown && (
+                <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 py-1 max-h-[200px] overflow-y-auto">
+                  {(type === "expense" ? ExpenseCategories : IncomeCategories).map((category) => (
+                    <div
+                      key={category.name}
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm transition-colors"
+                      onClick={() => {
+                        handleCategoryChange(category.name);
+                        setShowCategoryDropdown(false);
+                      }}
+                    >
+                      {category.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <input
+                type="hidden"
+                name="category"
+                value={selectedCategory}
+                required
+              />
+            </div>
           </div>
           
           {/* Danh mục con */}
@@ -498,23 +580,44 @@ export function TransactionFormFixed({
                 )}
               </div>
               
-              <Select
-                value={selectedSubCategory}
-                onValueChange={handleSubCategoryChange}
-              >
-                <SelectTrigger id="subCategory" aria-label="Chọn danh mục con">
-                  <SelectValue placeholder="Chọn danh mục con" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[200px] overflow-y-auto">
-                  <SelectGroup>
+              <div className="relative" ref={subCategoryDropdownRef}>
+                <div 
+                  className={`flex h-9 items-center justify-between px-3 py-2 text-sm rounded-lg border border-gray-100 bg-white shadow-sm cursor-pointer transition-all duration-200 ${errors.subCategory ? 'border-red-300' : 'hover:border-gray-200 hover:shadow'}`}
+                  onClick={() => setShowSubCategoryDropdown(!showSubCategoryDropdown)}
+                >
+                  <span className="text-gray-700 font-medium">
+                    {selectedSubCategory || "Chọn danh mục con"}
+                  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-40">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </div>
+                
+                {/* Custom dropdown panel */}
+                {showSubCategoryDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 py-1 max-h-[200px] overflow-y-auto">
                     {subCategories.map((subCategory) => (
-                      <SelectItem key={subCategory} value={subCategory}>
+                      <div
+                        key={subCategory}
+                        className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm transition-colors"
+                        onClick={() => {
+                          handleSubCategoryChange(subCategory);
+                          setShowSubCategoryDropdown(false);
+                        }}
+                      >
                         {subCategory}
-                      </SelectItem>
+                      </div>
                     ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                  </div>
+                )}
+                
+                <input
+                  type="hidden"
+                  name="subCategory"
+                  value={selectedSubCategory}
+                  required
+                />
+              </div>
             </div>
           )}
           
@@ -561,6 +664,13 @@ export function TransactionFormFixed({
               <span className="absolute right-3 text-gray-500">VND</span>
             </div>
             
+            {/* Hiển thị số tiền bằng chữ */}
+            {amount && amount.length > 0 && (
+              <p className="text-xs text-gray-600 mt-1 italic">
+                {amountToWords(parseFloat(amount.replace(/\./g, "").replace(/,/g, ".").replace(/\s+đ/g, "")) || 0)}
+              </p>
+            )}
+            
             {showAmountSuggestions && (
               <div className="grid grid-cols-4 gap-2 mt-2">
                 {amountSuggestions.map((suggestion, index) => (
@@ -590,21 +700,45 @@ export function TransactionFormFixed({
               )}
             </div>
             
-            <Select
-              value={paymentMethod}
-              onValueChange={setPaymentMethod}
-            >
-              <SelectTrigger id="paymentMethod" aria-label="Chọn phương thức thanh toán">
-                <SelectValue placeholder="Chuyển khoản" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="Chuyển khoản">Chuyển khoản</SelectItem>
-                  <SelectItem value="Tiền mặt">Tiền mặt</SelectItem>
-                  <SelectItem value="Quẹt thẻ">Quẹt thẻ</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <div 
+                className={`flex h-9 items-center justify-between px-3 py-2 text-sm rounded-lg border border-gray-100 bg-white shadow-sm cursor-pointer transition-all duration-200 ${errors.paymentMethod ? 'border-red-300' : 'hover:border-gray-200 hover:shadow'}`}
+                onClick={() => {
+                  // Tạo một menu custom đơn giản
+                  const currentMethod = paymentMethod === "Tiền mặt" ? "Chuyển khoản" : "Tiền mặt";
+                  setPaymentMethod(currentMethod);
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  {paymentMethod === "Tiền mặt" ? (
+                    <span className="w-4 h-4 flex items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-red-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="20" height="12" x="2" y="6" rx="2" />
+                        <circle cx="12" cy="12" r="2" />
+                        <path d="M6 12h.01M18 12h.01" />
+                      </svg>
+                    </span>
+                  ) : (
+                    <span className="w-4 h-4 flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-teal-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="20" height="14" x="2" y="5" rx="2" />
+                        <line x1="2" x2="22" y1="10" y2="10" />
+                      </svg>
+                    </span>
+                  )}
+                  <span className="text-gray-700 font-medium">{paymentMethod || "Chọn phương thức"}</span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-40">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+              <input
+                type="hidden"
+                name="paymentMethod"
+                value={paymentMethod}
+                required
+              />
+            </div>
           </div>
           
           {/* Số lít xăng - hiển thị khi là chi phí xăng xe */}
@@ -726,14 +860,17 @@ export function TransactionFormFixed({
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="flex-1"
+              className="flex-1 ios-button-effect"
             >
               Huỷ
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 ${type === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+              className={`flex-1 ios-button-effect ${
+                type === 'expense' 
+                  ? 'bg-gradient-to-r from-rose-500 to-red-500 hover:bg-gradient-to-r hover:from-rose-600 hover:to-red-600 shadow-md' 
+                  : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:bg-gradient-to-r hover:from-emerald-600 hover:to-teal-600 shadow-md'}`}
             >
               {isSubmitting ? (
                 <>

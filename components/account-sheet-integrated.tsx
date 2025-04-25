@@ -9,7 +9,6 @@ import { useDate } from "@/lib/date-context"
 import { X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatCurrency } from "@/lib/number-to-words"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface AccountData {
   currentBalance: number // Số dư hiện có
@@ -213,7 +212,7 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
 
         {!isDialogOpen ? (
           <button 
-            className="flex flex-col items-center"
+            className="flex flex-col items-center relative"
             onClick={() => {
               setSelectedMonth(currentDate.getMonth() + 1);
               setSelectedYear(currentDate.getFullYear());
@@ -225,12 +224,16 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
           </button>
         ) : (
           <div 
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+            className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-[1000] flex items-start justify-center backdrop-blur"
             onClick={() => setIsDialogOpen(false)}
           >
             <div 
-              className="bg-white w-[95%] max-w-[380px] rounded-lg overflow-hidden shadow-lg"
+              className="bg-white w-[95%] max-w-[360px] rounded-xl overflow-hidden shadow-xl mt-16 animate-in fade-in-50 zoom-in-95 duration-200 border border-gray-200 ios-card-effect"
               onClick={(e) => e.stopPropagation()}
+              style={{
+                transform: "translateY(0)",
+                transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+              }}
             >
               <div className="px-4 py-3 border-b flex justify-between items-center bg-white sticky top-0 z-10">
                 <h3 className="text-lg font-medium">Chọn tháng và năm</h3>
@@ -243,52 +246,55 @@ export function AccountSheetIntegrated({ initialData, className }: AccountSheetI
                 </button>
               </div>
               
-              <div className="p-4 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Tháng</label>
-                    <Select
-                      value={selectedMonth.toString()}
-                      onValueChange={(value) => setSelectedMonth(Number.parseInt(value))}
-                    >
-                      <SelectTrigger className="w-full rounded-lg">
-                        <SelectValue placeholder="Tháng" />
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="max-h-[300px]">
-                        {monthNames.map((month, index) => (
-                          <SelectItem key={index} value={(index + 1).toString()}>
-                            {month}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Năm</label>
-                    <Select
-                      value={selectedYear.toString()}
-                      onValueChange={(value) => setSelectedYear(Number.parseInt(value))}
-                    >
-                      <SelectTrigger className="w-full rounded-lg">
-                        <SelectValue placeholder="Năm" />
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="max-h-[300px]">
-                        {years.map((year) => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+              <div className="p-4">
+                {/* Phần chọn tháng */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium mb-2">Tháng</h4>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => (
+                      <button
+                        key={month}
+                        onClick={() => setSelectedMonth(month)}
+                        className={`py-2 px-2 rounded-lg text-sm transition-all ${
+                          selectedMonth === month
+                            ? 'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-sm'
+                            : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                      >
+                        T.{month}
+                      </button>
+                    ))}
                   </div>
                 </div>
+                
+                {/* Phần chọn năm */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium mb-2">Năm</h4>
+                  <div className="grid grid-cols-4 gap-2">
+                    {Array.from({ length: 8 }, (_, i) => 2020 + i).map((year) => (
+                      <button
+                        key={year}
+                        onClick={() => setSelectedYear(year)}
+                        className={`py-2 px-2 rounded-lg text-sm transition-all ${
+                          selectedYear === year
+                            ? 'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-sm'
+                            : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Nút áp dụng */}
                 <div className="flex justify-end">
-                  <Button
+                  <button
                     onClick={applyDateSelection}
-                    className="bg-techcom-red text-white px-4 py-2 rounded-lg hover:bg-techcom-darkred"
+                    className="bg-gradient-to-r from-rose-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-rose-600 hover:to-red-600 transition-all ios-button-effect"
                   >
                     Áp dụng
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>

@@ -1,18 +1,47 @@
-"use client"
-
 import { useState, useEffect, useRef } from "react"
 import { format, addMonths, subMonths, getMonth, getYear } from "date-fns"
 
+interface IOSDatePickerProps {
+  onDateSelect: (date: Date) => void;
+  initialDate?: Date | string;
+  onClose?: () => void;
+}
+
 // iOS/macOS style Date Picker component
-const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }) => {
+const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }: IOSDatePickerProps) => {
+  // Đảm bảo initialDate luôn là một đối tượng Date hợp lệ
+  const ensureValidDate = (date: Date | string): Date => {
+    try {
+      // Nếu là chuỗi, chuyển đổi thành đối tượng Date
+      if (typeof date === 'string') {
+        const parsedDate = new Date(date);
+        // Kiểm tra xem Date có hợp lệ không
+        return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+      }
+      
+      // Nếu đã là đối tượng Date, kiểm tra tính hợp lệ
+      if (date instanceof Date) {
+        return isNaN(date.getTime()) ? new Date() : date;
+      }
+      
+      // Mặc định trả về ngày hiện tại
+      return new Date();
+    } catch (e) {
+      console.error("Lỗi khi xử lý ngày:", e);
+      return new Date();
+    }
+  };
+  
+  const validInitialDate = ensureValidDate(initialDate);
+  
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [currentDate, setCurrentDate] = useState(initialDate)
-  const [currentMonth, setCurrentMonth] = useState(initialDate)
+  const [currentDate, setCurrentDate] = useState(validInitialDate)
+  const [currentMonth, setCurrentMonth] = useState(validInitialDate)
   const [animation, setAnimation] = useState("")
-  const datePickerRef = useRef(null)
+  const datePickerRef = useRef<HTMLDivElement | null>(null)
 
   // Generate days in month
-  const getDaysInMonth = (date) => {
+  const getDaysInMonth = (date: Date) => {
     const year = getYear(date)
     const month = getMonth(date)
     const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -45,125 +74,110 @@ const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }) => {
   const weekDays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]
 
   // Format month name
-  const formatMonthName = (date) => {
+  const formatMonthName = (date: Date) => {
     return `THÁNG ${format(date, "M")}`
   }
 
-  // Handle month navigation with enhanced animations
-  const prevMonth = () => {
-    // Don't use setAnimation here which affects entire grid visibility
-
-    // Animate the calendar container for a smoother transition
-    const calendarGrid = document.querySelector(".calendar-grid")
-    if (calendarGrid) {
-      calendarGrid.animate(
-        [
-          { transform: "translateX(0)", opacity: 1 },
-          { transform: "translateX(8%)", opacity: 0.3 },
-        ],
-        {
-          duration: 150,
-          easing: "ease-out",
-          fill: "forwards",
-        },
-      )
-    }
-
-    setTimeout(() => {
-      setCurrentMonth(subMonths(currentMonth, 1))
-
-      // Animate the new month coming in
-      if (calendarGrid) {
-        calendarGrid.animate(
-          [
-            { transform: "translateX(-8%)", opacity: 0.3 },
-            { transform: "translateX(0)", opacity: 1 },
-          ],
-          {
-            duration: 200,
-            easing: "ease-out",
-            fill: "forwards",
-          },
-        )
-      }
-    }, 150)
+  // Go to previous month
+  const goToPreviousMonth = () => {
+    setCurrentMonth(subMonths(currentMonth, 1))
   }
 
-  const nextMonth = () => {
-    // Don't use setAnimation here which affects entire grid visibility
-
-    // Animate the calendar container for a smoother transition
-    const calendarGrid = document.querySelector(".calendar-grid")
-    if (calendarGrid) {
-      calendarGrid.animate(
-        [
-          { transform: "translateX(0)", opacity: 1 },
-          { transform: "translateX(-8%)", opacity: 0.3 },
-        ],
-        {
-          duration: 150,
-          easing: "ease-out",
-          fill: "forwards",
-        },
-      )
-    }
-
-    setTimeout(() => {
-      setCurrentMonth(addMonths(currentMonth, 1))
-
-      // Animate the new month coming in
-      if (calendarGrid) {
-        calendarGrid.animate(
-          [
-            { transform: "translateX(8%)", opacity: 0.3 },
-            { transform: "translateX(0)", opacity: 1 },
-          ],
-          {
-            duration: 200,
-            easing: "ease-out",
-            fill: "forwards",
-          },
-        )
-      }
-    }, 150)
+  // Go to next month
+  const goToNextMonth = () => {
+    setCurrentMonth(addMonths(currentMonth, 1))
   }
 
-  // Handle date selection with animation
-  const handleDateSelect = (day, element) => {
-    if (day) {
-      // Animate the selected date with a pulse effect
-      if (element) {
-        element.animate(
+  // Animations
+  const animateOut = () => {
+    if (datePickerRef.current) {
+      setAnimation("animate-out");
+      setTimeout(() => {
+        setShowDatePicker(false);
+        setAnimation("");
+        if (onClose) onClose();
+      }, 200);
+    }
+  };
+
+  const animateIn = () => {
+    if (datePickerRef.current) {
+      try {
+        // Web Animation API có thể không được nhận dạng bởi TypeScript
+        // Ép kiểu để tránh lỗi TypeScript
+        (datePickerRef.current as any).animate(
           [
-            { transform: "scale(1)", backgroundColor: "rgba(239, 68, 68, 0.8)" },
-            { transform: "scale(1.1)", backgroundColor: "rgba(239, 68, 68, 1)" },
-            { transform: "scale(1)", backgroundColor: "rgba(239, 68, 68, 0.9)" },
+            { transform: "translateY(20px)", opacity: 0 },
+            { transform: "translateY(0)", opacity: 1 },
           ],
           {
             duration: 300,
-            easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)",
             fill: "forwards",
-          },
-        )
+          }
+        );
+      } catch (e) {
+        console.error("Lỗi khi thực hiện animation:", e);
+      }
+    }
+  };
+
+  // Open date picker with animation
+  const openDatePicker = () => {
+    setShowDatePicker(true)
+    requestAnimationFrame(() => {
+      animateIn();
+    });
+  }
+
+  // Close date picker with animation
+  const closeDatePicker = () => {
+    animateOut();
+  }
+
+  // Handle date selection with animation
+  const handleDateSelect = (day: number | null, element: HTMLElement | null) => {
+    if (day) {
+      // Animate the selected date with a pulse effect
+      if (element) {
+        try {
+          // Web Animation API có thể không được nhận dạng bởi TypeScript
+          // Ép kiểu để tránh lỗi TypeScript
+          (element as any).animate(
+            [
+              { transform: "scale(1)", background: "#f3f4f6" },
+              { transform: "scale(1.2)", background: "#f9fafb" },
+              { transform: "scale(1)", background: "#f3f4f6" },
+            ],
+            {
+              duration: 300,
+              easing: "ease-in-out",
+            }
+          );
+        } catch (e) {
+          console.error("Lỗi khi thực hiện animation:", e);
+        }
       }
 
-      const selectedDate = new Date(getYear(currentMonth), getMonth(currentMonth), day)
-      setCurrentDate(selectedDate)
-
-      // Delay closing slightly to see the selection animation
-      setTimeout(() => {
-        if (onDateSelect) {
-          onDateSelect(selectedDate)
-        }
-        closeDatePicker()
-      }, 250)
+      // Create new date object
+      const newDate = new Date(currentMonth);
+      newDate.setDate(day);
+      
+      // Update state
+      setCurrentDate(newDate);
+      
+      // Callback
+      onDateSelect(newDate);
+      
+      // Auto close after selection
+      closeDatePicker();
     }
-  }
+  };
 
   // Handle clicking outside to close
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target) && showDatePicker) {
+    function handleClickOutside(event: MouseEvent): void {
+      if (datePickerRef.current && !(datePickerRef.current as HTMLElement).contains(event.target as Node)) {
         closeDatePicker()
       }
     }
@@ -174,78 +188,45 @@ const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }) => {
     }
   }, [showDatePicker])
 
-  // Open date picker with enhanced animation
-  const openDatePicker = () => {
-    setShowDatePicker(true)
-    // Use a very short timeout to ensure the DOM is updated before animation starts
-    setTimeout(() => {
-      setAnimation("fade-in")
-    }, 10)
-
-    // Add spring-like bounce animation to the date picker
-    const element = datePickerRef.current
-    if (element) {
-      element.animate(
-        [
-          { transform: "scale(0.95)", opacity: 0 },
-          { transform: "scale(1.02)", opacity: 1, offset: 0.7 },
-          { transform: "scale(1)", opacity: 1 },
-        ],
-        {
-          duration: 350,
-          easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", // Spring-like easing
-          fill: "forwards",
-        },
+  const isCurrentDay = (day: number | null): boolean => {
+    if (day === null) return false;
+    
+    try {
+      const today = new Date()
+      return (
+        day === today.getDate() &&
+        getMonth(currentMonth) === today.getMonth() &&
+        getYear(currentMonth) === today.getFullYear()
       )
+    } catch (e) {
+      console.error("Lỗi khi kiểm tra ngày hiện tại:", e);
+      return false;
     }
   }
 
-  // Close date picker with enhanced animation
-  const closeDatePicker = () => {
-    setAnimation("fade-out")
-
-    // Add closing animation
-    const element = datePickerRef.current
-    if (element) {
-      element.animate(
-        [
-          { transform: "scale(1)", opacity: 1 },
-          { transform: "scale(0.95)", opacity: 0 },
-        ],
-        {
-          duration: 250,
-          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-          fill: "forwards",
-        },
+  const isSelectedDay = (day: number | null): boolean => {
+    if (day === null) return false;
+    
+    try {
+      return (
+        day === currentDate.getDate() &&
+        getMonth(currentMonth) === getMonth(currentDate) &&
+        getYear(currentMonth) === getYear(currentDate)
       )
+    } catch (e) {
+      console.error("Lỗi khi kiểm tra ngày được chọn:", e);
+      return false;
     }
-
-    setTimeout(() => {
-      setShowDatePicker(false)
-      if (onClose) {
-        onClose()
-      }
-    }, 300)
   }
 
-  const isCurrentDay = (day) => {
-    const today = new Date()
-    return (
-      day === today.getDate() &&
-      getMonth(currentMonth) === today.getMonth() &&
-      getYear(currentMonth) === today.getYear()
-    )
+  // Sử dụng try-catch để xử lý lỗi khi định dạng ngày
+  let formattedDate = "";
+  try {
+    formattedDate = format(currentDate, "dd/MM/yyyy");
+  } catch (e) {
+    console.error("Lỗi khi định dạng ngày:", e, currentDate);
+    formattedDate = format(new Date(), "dd/MM/yyyy");
   }
-
-  const isSelectedDay = (day) => {
-    return (
-      day === currentDate.getDate() &&
-      getMonth(currentMonth) === getMonth(currentDate) &&
-      getYear(currentMonth) === getYear(currentDate)
-    )
-  }
-
-  const formattedDate = format(currentDate, "dd/MM/yyyy")
 
   const handleClick = () => {
     openDatePicker()
@@ -258,104 +239,105 @@ const IOSDatePicker = ({ onDateSelect, initialDate = new Date(), onClose }) => {
         value={formattedDate}
         readOnly
         onClick={handleClick}
-        className="w-full rounded-lg h-11 bg-white text-xs border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
-        style={{ fontSize: "16px" }} // Ngăn iOS zoom vào input
+        className="w-full rounded-md h-10 text-sm border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 cursor-pointer"
       />
-      {/* Modal Backdrop with Enhanced Blur Effect */}
       {showDatePicker && (
-        <div className="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-md z-40 flex items-center justify-center transition-all duration-500">
-          {/* Calendar Card */}
-          <div
-            ref={datePickerRef}
-            className={`bg-white bg-opacity-95 rounded-2xl p-4 absolute z-50 transition-all duration-300 transform ${
-              animation === "fade-in"
-                ? "opacity-100 scale-100"
-                : animation === "fade-out"
-                  ? "opacity-0 scale-95"
-                  : "opacity-0 scale-95"
-            }`}
-            style={{
-              maxWidth: "340px",
-              boxShadow:
-                "0 10px 30px rgba(0, 0, 0, 0.15), 0 1px 5px rgba(0, 0, 0, 0.08), 0 20px 40px rgba(0, 0, 0, 0.08)",
-            }}
-          >
-            {/* Calendar Header */}
-            <div className="flex items-center justify-between mb-4">
-              <button onClick={prevMonth} className="p-1 rounded-full hover:bg-gray-100 transition" type="button">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 text-gray-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <h2 className="text-xl font-medium text-red-500">{formatMonthName(currentMonth)}</h2>
-              <button onClick={nextMonth} className="p-1 rounded-full hover:bg-gray-100 transition" type="button">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 text-gray-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 mb-2">
-              {weekDays.map((day, index) => (
-                <div key={index} className="text-center text-sm font-medium text-gray-700 py-1">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Days */}
-            <div className="calendar-grid grid grid-cols-7 gap-1 transition-all duration-300">
-              {getDaysInMonth(currentMonth).map((day, index) => (
-                <div
-                  key={`${getMonth(currentMonth)}-${getYear(currentMonth)}-${index}`}
-                  className={`
-                    text-center py-1 text-base select-none
-                    ${day ? "cursor-pointer" : ""}
-                    ${isCurrentDay(day) ? "text-blue-500 font-semibold" : "text-gray-800"}
-                  `}
-                  onClick={(e) => day && handleDateSelect(day, e.currentTarget.querySelector("div"))}
-                >
-                  {day && (
-                    <div
-                      className={`
-                        w-10 h-10 mx-auto flex items-center justify-center rounded-full transition-colors
-                        ${isSelectedDay(day) ? "bg-red-500 text-white" : "hover:bg-gray-100"}
-                      `}
-                    >
-                      {day}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Today Button */}
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => {
-                  const today = new Date()
-                  setCurrentMonth(today)
-                  handleDateSelect(today.getDate(), null)
-                }}
-                className="text-red-500 font-medium text-sm hover:underline"
-                type="button"
+        <div
+          ref={datePickerRef}
+          className={`absolute left-0 w-[330px] bg-white rounded-md shadow-lg mt-1 z-50 p-4 border border-gray-200 transition-all duration-150 ${animation}`}
+          style={{
+            transformOrigin: "top center",
+          }}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center mb-4">
+            <button
+              type="button"
+              onClick={goToPreviousMonth}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                Hôm nay
+                <path
+                  d="M10 12L6 8L10 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <div className="text-sm font-semibold">{formatMonthName(currentMonth)}</div>
+            <button
+              type="button"
+              onClick={goToNextMonth}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6 12L10 8L6 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Day names */}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {weekDays.map((day, i) => (
+              <div
+                key={i}
+                className="text-[10px] font-medium text-gray-500 text-center p-1"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {getDaysInMonth(currentMonth).map((day, i) => (
+              <button
+                key={i}
+                type="button"
+                disabled={day === null}
+                onClick={(e) => handleDateSelect(day, e.currentTarget)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm transition-colors duration-200 disabled:opacity-0 relative ${
+                  isSelectedDay(day)
+                    ? "bg-blue-500 text-white font-medium"
+                    : isCurrentDay(day)
+                    ? "bg-blue-100 text-blue-800 font-medium"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {day}
               </button>
-            </div>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="mt-4 flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={closeDatePicker}
+              className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            >
+              Đóng
+            </button>
           </div>
         </div>
       )}

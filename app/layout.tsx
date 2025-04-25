@@ -1,6 +1,7 @@
 import type React from "react"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import "../styles/ios-scroll.css" // Import iOS-like scroll effects
 import ClientLayout from "./client-layout"
 import { TestDropdown } from "@/components/test-dropdown"
 

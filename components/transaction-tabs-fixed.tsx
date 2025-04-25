@@ -48,12 +48,30 @@ function formatCurrency(amount: number) {
 
 // Helper: Format date chỉ phía client
 function formatDate(date: string) {
-  if (typeof window !== "undefined") {
-    // Nếu là ISO, chuyển sang dd/MM/yyyy
-    const d = new Date(date)
-    return d.toLocaleDateString("vi-VN")
+  // Tránh sử dụng phát hiện client-side trực tiếp trong render
+  if (!date) return "---";
+  
+  // Kiểm tra nếu đã ở định dạng dd/MM/yyyy
+  if (date.includes('/') && date.split('/').length === 3) {
+    return date;
   }
-  return date
+  
+  try {
+    // Dùng cách định dạng an toàn cho cả server và client 
+    const d = new Date(date);
+    if (!isNaN(d.getTime())) {
+      // Dùng định dạng thủ công để tránh sai lệch server/client
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+  } catch (e) {
+    console.error("Lỗi chuyển đổi ngày: ", e);
+  }
+  
+  // Trả về giá trị gốc nếu không xử lý được
+  return date || "---";
 }
 
 export function TransactionTabsFixed({
