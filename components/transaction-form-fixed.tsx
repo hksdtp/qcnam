@@ -178,7 +178,7 @@ export function TransactionFormFixed({
         checkIsCarFuelCategory(category, subCategory);
       }
       
-      // Kiểm tra lại sau một khoảng thời gian ngắn để đảm bảo giá trị được đặt đúng
+      // Kiểm tra lại sau một khoảng thởi gian ngắn để đảm bảo giá trị được đặt đúng
       setTimeout(() => {
         if (selectedCategory !== storedCategory) {
           console.log("Fixing category:", storedCategory);
@@ -373,57 +373,68 @@ export function TransactionFormFixed({
     e.preventDefault()
     
     if (!validateForm()) {
-      return
-    }
-    
-    try {
-      const formDataObj = new FormData()
-      
-      // Lấy giá trị số từ amount đã được định dạng
-      const numericAmount = parseFloat(amount.replace(/\./g, ""))
-      
-      formDataObj.append("type", type)
-      formDataObj.append("category", selectedCategory)
-      if (selectedSubCategory) formDataObj.append("subCategory", selectedSubCategory)
-      formDataObj.append("description", description)
-      formDataObj.append("amount", String(numericAmount))
-      formDataObj.append("paymentMethod", paymentMethod)
-      formDataObj.append("date", date.toISOString())
-      if (note) formDataObj.append("note", note)
-      
-      // Thêm fuelLiters nếu là giao dịch xăng
-      if (isCarFuelCategory && fuelLiters) {
-        formDataObj.append("fuelLiters", fuelLiters)
-      }
-      
-      // Thêm ID nếu là cập nhật giao dịch
-      if (existingTransaction && existingTransaction.id) {
-        formDataObj.append("id", existingTransaction.id)
-      }
-      
-      // Thêm hình ảnh nếu có
-      if (file) {
-        formDataObj.append("image", file)
-      } else if (previewUrl && previewUrl.startsWith("http")) {
-        formDataObj.append("image", previewUrl)
-      }
-
-      if (onSubmit) {
-        await onSubmit(formDataObj)
-      }
-      
-      if (onSuccess) {
-        onSuccess()
-      }
-    } catch (error) {
-      // Xử lý lỗi với kiểu an toàn
-      const errorMessage = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định";
       toast({
         title: "Lỗi",
-        description: errorMessage,
+        description: "Vui lòng điền đầy đủ thông tin",
         variant: "destructive",
       })
-      console.error("Form submit error:", errorMessage)
+      return
+    }
+
+    // Bắt đầu loading
+    if (typeof onSubmit === 'function') {
+      try {
+        // Chuẩn bị dữ liệu
+        const formDataObj = new FormData()
+        
+        // Convert date object to formatted string for storage: DD/MM/YYYY
+        const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`
+        
+        formDataObj.append("date", formattedDate)
+        formDataObj.append("category", selectedCategory)
+        formDataObj.append("description", description)
+        formDataObj.append("amount", amount.replace(/[^\d]/g, ""))
+        formDataObj.append("type", type)
+        
+        if (selectedSubCategory) {
+          formDataObj.append("subCategory", selectedSubCategory)
+        }
+        
+        if (fuelLiters) {
+          formDataObj.append("fuelLiters", fuelLiters)
+        }
+        
+        // Convert display payment method names to storage format
+        let paymentMethodValue = paymentMethod === "Tiền mặt" ? "cash" : "transfer";
+        formDataObj.append("paymentMethod", paymentMethodValue)
+        
+        if (note) {
+          formDataObj.append("note", note)
+        }
+        
+        if (file) {
+          formDataObj.append("image", file)
+        } else if (previewUrl && previewUrl.startsWith("http")) {
+          formDataObj.append("image", previewUrl)
+        }
+
+        // Gửi dữ liệu
+        await onSubmit(formDataObj)
+        
+        // Nếu thành công
+        if (onSuccess) {
+          onSuccess()
+        }
+      } catch (error) {
+        // Xử lý lỗi với kiểu an toàn
+        const errorMessage = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định";
+        toast({
+          title: "Lỗi",
+          description: errorMessage,
+          variant: "destructive",
+        })
+        console.error("Form submit error:", error)
+      }
     }
   }
 

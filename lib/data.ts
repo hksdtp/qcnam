@@ -72,12 +72,12 @@ export async function fetchAllTransactions(): Promise<Transaction[]> {
         category: row[1] || "",
         description: row[2] || "",
         amount: amount,
-        type: (row[4] || "expense").toLowerCase() === "income" ? "income" : "expense",
+        type: ((row[4] || "expense").toLowerCase() === "income" ? "income" : "expense") as "income" | "expense",
         receiptLink: receiptLink,
         timestamp: row[6] || new Date().toISOString(),
         subCategory: row[7] || null, // Thêm subCategory nếu có
-        quantity: row[8] || null, // Thêm số lượng nếu có
-        paymentMethod: row[9] || "card", // Thêm phương thức thanh toán
+        fuelLiters: row[8] || null, // Thêm số lượng xăng nếu có
+        paymentMethod: row[9] === "cash" ? "Tiền mặt" : "Chuyển khoản", // Chuyển đổi giá trị để hiển thị
         note: row[10] || null, // Thêm ghi chú nếu có
       })
     }
@@ -91,7 +91,9 @@ export async function fetchAllTransactions(): Promise<Transaction[]> {
     return transactions
   } catch (error) {
     console.error("Error fetching transactions:", error)
-    console.error("Error details:", error.response?.data || error.message)
+    // Xử lý lỗi an toàn với TypeScript
+    const err = error as any; // Type casting cho error
+    console.error("Error details:", err.response?.data || (err instanceof Error ? err.message : 'Unknown error'))
     return []
   }
 }
@@ -329,9 +331,9 @@ export async function calculateAccountData(month: number, year: number) {
           transaction.category &&
           transaction.category.toLowerCase().includes("chi phí xe") &&
           transaction.subCategory === "Xăng" &&
-          transaction.quantity
+          transaction.fuelLiters
         ) {
-          const fuelAmount = Number.parseFloat(transaction.quantity.toString())
+          const fuelAmount = Number.parseFloat(transaction.fuelLiters.toString())
           if (!isNaN(fuelAmount)) {
             totalFuel += fuelAmount
             console.log(`  -> Added to totalFuel: ${fuelAmount}`)
