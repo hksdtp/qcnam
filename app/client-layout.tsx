@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { LoadingScreen } from "@/components/loading-screen"
+import { HeartLoadingScreen } from "@/components/heart-loading-screen"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -31,7 +31,7 @@ export default function ClientLayout({
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} forcedTheme="light">
       {loading && (
-        <LoadingScreen appName="BÁO CÁO CHI TIÊU" backgroundColor="#E51A22" onLoadingComplete={handleLoadingComplete} />
+        <HeartLoadingScreen appName="BÁO CÁO CHI TIÊU" onLoadingComplete={handleLoadingComplete} />
       )}
 
       <div

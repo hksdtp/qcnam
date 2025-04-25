@@ -4,12 +4,12 @@
 import { google } from "googleapis"
 import { JWT } from "google-auth-library"
 
-// Cập nhật cấu hình với ID mới
-const SPREADSHEET_ID = "1JwFzEMRZsxAuIzMV0XRSI5X98AXeGa9f2cXVkUzXReE"
+// Cập nhật cấu hình với ID mới - Thay đổi ID cho bản sao
+const SPREADSHEET_ID = "1gcqwMeGG14ZXndEa8bgH1r38htvb6IHCzUYZZunZPh8" // ID Google Sheet mới
 // Cập nhật tên sheet chính xác - thường là "Sheet1" hoặc "Trang tính1"
 const SHEET_NAME = "Sheet1"
-// ID thư mục Google Drive mới
-const DRIVE_FOLDER_ID = "1BoiKfWBpriBmdyXhUbpv-GKM2bPmGvRn"
+// ID thư mục Google Drive mới - Thay đổi ID này
+const DRIVE_FOLDER_ID = "1K6KA2FuVSCqi1K8pRJb4_JfF8kqnGByR" // ID thư mục Google Drive mới
 
 // Cập nhật thông tin xác thực tài khoản dịch vụ với khóa mới
 const serviceAccount = {
@@ -63,9 +63,10 @@ export async function getAccessToken() {
     }
 
     return token.token
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Lỗi lấy access token:", error)
-    throw new Error(`Không thể lấy access token: ${error.message}`)
+    const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+    throw new Error(`Không thể lấy access token: ${errorMessage}`)
   }
 }
 
@@ -100,10 +101,10 @@ export async function ensureSpreadsheetSetup() {
     })
 
     // Lấy danh sách tất cả các sheet
-    const allSheets = response.data.sheets.map((s: any) => s.properties.title)
+    const allSheets = response.data.sheets?.map((s: any) => s.properties.title) || []
     console.log("Danh sách sheet:", allSheets)
 
-    const sheetExists = response.data.sheets.some((sheet: any) => sheet.properties.title === SHEET_NAME)
+    const sheetExists = response.data.sheets?.some((sheet: any) => sheet.properties.title === SHEET_NAME) || false
     console.log(`Sheet "${SHEET_NAME}" tồn tại: ${sheetExists}`)
 
     if (!sheetExists) {
@@ -111,7 +112,7 @@ export async function ensureSpreadsheetSetup() {
       // Tạo sheet Transactions
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
-        resource: {
+        requestBody: {
           requests: [
             {
               addSheet: {
@@ -130,7 +131,7 @@ export async function ensureSpreadsheetSetup() {
         spreadsheetId: SPREADSHEET_ID,
         range: `${SHEET_NAME}!A1:H1`,
         valueInputOption: "RAW",
-        resource: {
+        requestBody: {
           values: [["Date", "Category", "Description", "Amount", "Type", "ReceiptLink", "Timestamp", "SubCategory"]],
         },
       })
@@ -139,7 +140,7 @@ export async function ensureSpreadsheetSetup() {
     }
 
     return SPREADSHEET_ID
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Lỗi thiết lập bảng tính:", error)
     throw error
   }
